@@ -192,7 +192,7 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
 if __name__ == '__main__':
     sess, model, config = setup()
     print ("Setup is complete")
-    streamer = Streamer('171.64.70.232', '8080')
+    streamer = Streamer('128.12.254.132', '8080')
     main(sess, model, config, streamer)
 
 
