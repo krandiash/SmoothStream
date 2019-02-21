@@ -8,8 +8,6 @@ from constants import PORT, SERVER_ADDRESS
 from utils import image_to_string
 
 from absl import flags
-from StreamViewer import preprocess_image
-import src.config
 
 class Streamer:
 
@@ -65,6 +63,25 @@ class Streamer:
         """
         self.keep_running = False
 
+def preprocess_image(img, config):
+    if img.shape[2] == 4:
+        img = img[:, :, :3]
+
+    if np.max(img.shape[:2]) != config.img_size:
+        print('Resizing so the max image size is %d..' % config.img_size)
+        scale = (float(config.img_size) / np.max(img.shape[:2]))
+    else:
+        scale = 1.
+    center = np.round(np.array(img.shape[:2]) / 2).astype(int)
+    # image center in (x,y)
+    center = center[::-1]
+
+    crop, proc_param = img_util.scale_and_crop(img, scale, center, config.img_size)
+
+    # Normalize image to [-1, 1]
+    crop = 2 * ((crop / 255.) - 0.5)
+
+    return crop, proc_param, img
 
 def main():
     port = PORT
