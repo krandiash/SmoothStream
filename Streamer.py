@@ -8,6 +8,7 @@ from constants import PORT, SERVER_ADDRESS
 from utils import image_to_string
 
 from absl import flags
+import numpy as np
 
 class Streamer:
 
@@ -43,11 +44,11 @@ class Streamer:
         while self.footage_socket and self.keep_running:
             try:
                 frame = camera.current_frame.read()  # grab the current frame
-                crop, proc_param, img = preprocess_image(frame, config)
+                crop, proc_param, img = preprocess_image(fgrame)
                 # image_as_string = image_to_string(frame)
                 image_as_string = image_to_string(crop)
                 self.footage_socket.send(image_as_string + separator + str(id).encode())
-
+                print (id)
                 id += 1
 
             except KeyboardInterrupt:
@@ -63,20 +64,53 @@ class Streamer:
         """
         self.keep_running = False
 
-def preprocess_image(img, config):
+def resize_img(img, scale_factor):
+    new_size = (np.floor(np.array(img.shape[0:2]) * scale_factor)).astype(int)
+    new_img = cv2.resize(img, (new_size[1], new_size[0]))
+    # This is scale factor of [height, width] i.e. [y, x]
+    actual_factor = [
+        new_size[0] / float(img.shape[0]), new_size[1] / float(img.shape[1])
+    ]
+    return new_img, actual_factor
+
+def scale_and_crop(image, scale, center, img_size):
+    image_scaled, scale_factors = resize_img(image, scale)
+    # Swap so it's [x, y]
+    scale_factors = [scale_factors[1], scale_factors[0]]
+    center_scaled = np.round(center * scale_factors).astype(np.int)
+
+    margin = int(img_size / 2)
+    image_pad = np.pad(
+        image_scaled, ((margin, ), (margin, ), (0, )), mode='edge')
+    center_pad = center_scaled + margin
+    # figure out starting point
+    start_pt = center_pad - margin
+    end_pt = center_pad + margin
+    # crop:
+    crop = image_pad[start_pt[1]:end_pt[1], start_pt[0]:end_pt[0], :]
+    proc_param = {
+        'scale': scale,
+        'start_pt': start_pt,
+        'end_pt': end_pt,
+        'img_size': img_size
+    }
+
+    return crop, proc_param
+
+def preprocess_image(img):
     if img.shape[2] == 4:
         img = img[:, :, :3]
 
-    if np.max(img.shape[:2]) != config.img_size:
-        print('Resizing so the max image size is %d..' % config.img_size)
-        scale = (float(config.img_size) / np.max(img.shape[:2]))
+    if np.max(img.shape[:2]) != 224:
+        print('Resizing so the max image size is %d..' % 224)
+        scale = (float(224) / np.max(img.shape[:2]))
     else:
         scale = 1.
     center = np.round(np.array(img.shape[:2]) / 2).astype(int)
     # image center in (x,y)
     center = center[::-1]
 
-    crop, proc_param = img_util.scale_and_crop(img, scale, center, config.img_size)
+    crop, proc_param = scale_and_crop(img, scale, center, 224)
 
     # Normalize image to [-1, 1]
     crop = 2 * ((crop / 255.) - 0.5)
