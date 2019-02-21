@@ -77,6 +77,7 @@ class StreamViewer:
                 payload = self.footage_socket.recv_string()
                 frame, id = payload.split("__".encode())
                 id = int(id.decode())
+                print (id)
                 self.current_frame = string_to_image(frame)
 
                 # This shouldn't make any difference since we preprocessed before sending the image
@@ -86,9 +87,9 @@ class StreamViewer:
                 joints, verts, cams, joints3d, theta = model.predict(input_img, get_theta=True)
 
                 # We should send this at some point
-                message = combine_encoded_strings(nparray_to_string(joints), nparray_to_string(verts),
-                                                  nparray_to_string(cams), nparray_to_string(joints3d),
-                                                  nparray_to_string(theta))
+                # message = combine_encoded_strings(nparray_to_string(joints), nparray_to_string(verts),
+                #                                   nparray_to_string(cams), nparray_to_string(joints3d),
+                #                                   nparray_to_string(theta))
                 
                 skel_img, rend_img = visualize(img, proc_param, joints[0], verts[0], cams[0], renderer)
     
@@ -188,7 +189,7 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
     rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
     
     return skel_img, rend_img_overlay
-
+g
 
 if __name__ == '__main__':
     sess, model, config = setup()
