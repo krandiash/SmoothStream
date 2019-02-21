@@ -99,7 +99,8 @@ class StreamViewer:
                 print ("FPS", frames_processed/float(time.time() - start))
                 
                 if streamer is not None:
-                    streamer.footage_socket.send(image_to_string(skel_img))
+                    # streamer.footage_socket.send(image_to_string(skel_img))
+                    streamer.footage_socket.send(image_to_string(rend_img))
 
 
             except KeyboardInterrupt:
