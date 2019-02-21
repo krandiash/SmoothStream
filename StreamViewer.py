@@ -85,6 +85,7 @@ class StreamViewer:
                 input_img = np.expand_dims(input_img, 0)
                 # Predict the joints
                 joints, verts, cams, joints3d, theta = model.predict(input_img, get_theta=True)
+                print (joints3d)
 
                 # We should send this at some point
                 # message = combine_encoded_strings(nparray_to_string(joints), nparray_to_string(verts),
@@ -186,7 +187,7 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
 
     # Render results
     skel_img = vis_util.draw_skeleton(img, joints_orig)
-    rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
+    # rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
     
     return skel_img, rend_img_overlay
 

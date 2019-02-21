@@ -34,6 +34,7 @@ class StreamViewer:
             try:
                 frame = self.footage_socket.recv_string()
                 self.current_frame = string_to_image(frame)
+                print ("YES")
 
                 if display:
                     cv2.imshow("Stream", self.current_frame)
