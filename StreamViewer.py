@@ -187,7 +187,7 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
 
     # Render results
     skel_img = vis_util.draw_skeleton(img, joints_orig)
-    # rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
+    rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
     
     return skel_img, rend_img_overlay
 
