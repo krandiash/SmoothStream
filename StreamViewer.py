@@ -75,7 +75,7 @@ class StreamViewer:
                     start = time.time()
 
                 payload = self.footage_socket.recv_string()
-                frame, id = payload.split("__".split())
+                frame, id = payload.split("__".encode())
                 id = int(id.decode())
                 self.current_frame = string_to_image(frame)
 

@@ -44,7 +44,7 @@ class Streamer:
         while self.footage_socket and self.keep_running:
             try:
                 frame = camera.current_frame.read()  # grab the current frame
-                crop, proc_param, img = preprocess_image(fgrame)
+                crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(frame)
                 image_as_string = image_to_string(crop)
                 self.footage_socket.send(image_as_string + separator + str(id).encode())
