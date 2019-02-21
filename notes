@@ -1,13 +1,19 @@
 # First run the following command on a computer with a webcamera
 > python Streamer.py -s 10.79.12.88 -p 8880
-# where 10.79.12.88 is the IP address of the server and 8880 is the port. To check IP just type
+# where 10.79.12.88 is the IP address of the cloud server and 8880 is the port. To check IP just type
 > hostname -I
 # and copy the first IP address.
 # In another terminal window on the computer, run
-> python StreamViewer.py
+> python viewer.py -p 8080
 # Then, run
 > python StreamViewer.py
 # on the server.
+
+# (1) Edit the frame rate in Streamer.py by changing the sleep interval
+# (2) Make sure the IP address and port of the streamer (your computer) is correctly specified in StreamViewer.py
+#     IP address can be found by typing hostname in Terminal and copying the result. Port is generally okay at 8080.
+# (3) Configure whether to send the mesh or the skeleton as payload in StreamViewer.py
+
 
 
 
