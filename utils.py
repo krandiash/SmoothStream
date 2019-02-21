@@ -1,5 +1,7 @@
 import io
-
+import numpy as np
+import cv2
+import base64
 
 
 def is_raspberry_pi(raise_on_errors=False):
@@ -45,23 +47,39 @@ def is_raspberry_pi(raise_on_errors=False):
 
 
 def preview_image(image, name="window", time=1000):
-    import cv2
     cv2.imshow(name, image)
     if cv2.waitKey(time):
         cv2.destroyAllWindows()
 
 
+def nparray_to_string(arr):
+    arr_encoding = base64.b64encode(arr)
+    separator_encoding = "__".encode('utf-8')
+    shape_encoding = base64.b64encode(np.array(arr.shape))
+    return arr_encoding + separator_encoding + shape_encoding
+
+
+def combine_encoded_strings(*args):
+    return "____".encode('utf-8').join(args)
+
+
+def split_encoded_strings(string):
+    return string.split("____".encode('utf-8'))
+
+
+def string_to_nparray(string):
+    arr_encoding, shape_encoding = string.split("__".encode('utf-8'))
+    arr = np.fromstring(base64.b64decode(arr_encoding))
+    shape = np.fromstring(base64.b64decode(shape_encoding), dtype=int)
+    return arr.reshape(shape)
+
+
 def image_to_string(image):
-    import cv2
-    import base64
     encoded, buffer = cv2.imencode('.jpg', image)
     return base64.b64encode(buffer)
 
 
 def string_to_image(string):
-    import numpy as np
-    import cv2
-    import base64
     img = base64.b64decode(string)
     npimg = np.fromstring(img, dtype=np.uint8)
     return cv2.imdecode(npimg, 1)

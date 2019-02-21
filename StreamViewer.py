@@ -10,7 +10,7 @@ import numpy as np
 import zmq
 
 from constants import PORT
-from utils import string_to_image, image_to_string
+from utils import *
 
 
 from absl import flags
@@ -72,13 +72,22 @@ class StreamViewer:
             try:
                 if frames_processed == 0:
                     start = time.time()
-                frame = self.footage_socket.recv_string()
+
+                payload = self.footage_socket.recv_string()
+                frame, id = payload.split("__".split())
+                id = int(id.decode())
                 self.current_frame = string_to_image(frame)
-#                 print (self.current_frame.shape)
-                
+
+                # This shouldn't make any difference since we preprocessed before sending the image
                 input_img, proc_param, img = preprocess_image(self.current_frame, config)
                 input_img = np.expand_dims(input_img, 0)
+                # Predict the joints
                 joints, verts, cams, joints3d, theta = model.predict(input_img, get_theta=True)
+
+                # We should send this at some point
+                message = combine_encoded_strings(nparray_to_string(joints), nparray_to_string(verts),
+                                                  nparray_to_string(cams), nparray_to_string(joints3d),
+                                                  nparray_to_string(theta))
                 
                 skel_img, rend_img = visualize(img, proc_param, joints[0], verts[0], cams[0], renderer)
     

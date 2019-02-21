@@ -7,6 +7,9 @@ from camera.Camera import Camera
 from constants import PORT, SERVER_ADDRESS
 from utils import image_to_string
 
+from absl import flags
+from StreamViewer import preprocess_image
+import src.config
 
 class Streamer:
 
@@ -31,15 +34,23 @@ class Streamer:
         :return: None
         """
         print("Streaming Started...")
+        config = flags.FLAGS
         camera = Camera()
         camera.start_capture()
         self.keep_running = True
 
+        id = 0
+        separator = "__".encode()
+
         while self.footage_socket and self.keep_running:
             try:
                 frame = camera.current_frame.read()  # grab the current frame
-                image_as_string = image_to_string(frame)
-                self.footage_socket.send(image_as_string)
+                crop, proc_param, img = preprocess_image(frame, config)
+                # image_as_string = image_to_string(frame)
+                image_as_string = image_to_string(crop)
+                self.footage_socket.send(image_as_string + separator + str(id).encode())
+
+                id += 1
 
             except KeyboardInterrupt:
                 cv2.destroyAllWindows()
