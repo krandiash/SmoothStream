@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import sys
+sys.path.append('/next/u/kgoel/hmr')
 import argparse
 
 import cv2
@@ -8,9 +10,9 @@ import numpy as np
 import zmq
 
 from constants import PORT
-from utils import string_to_image
+from utils import string_to_image, image_to_string
 
-import sys
+
 from absl import flags
 
 import skimage.io as io
@@ -21,7 +23,9 @@ from src.util import image as img_util
 from src.util import openpose as op_util
 import src.config
 from src.RunModel import RunModel
+import time
 
+from Streamer import Streamer
 
 
 class StreamViewer:
@@ -60,14 +64,30 @@ class StreamViewer:
                 break
         print("Streaming Stopped!")
 
-    def process_stream(self):
+    def process_stream(self, sess, model, config, streamer=None):
         self.keep_running = True
+        frames_processed = 0
+        renderer = vis_util.SMPLRenderer(face_path=config.smpl_face_path)
         while self.footage_socket and self.keep_running:
             try:
+                if frames_processed == 0:
+                    start = time.time()
                 frame = self.footage_socket.recv_string()
                 self.current_frame = string_to_image(frame)
-                print (self.current_frame.shape)
-
+#                 print (self.current_frame.shape)
+                
+                input_img, proc_param, img = preprocess_image(self.current_frame, config)
+                input_img = np.expand_dims(input_img, 0)
+                joints, verts, cams, joints3d, theta = model.predict(input_img, get_theta=True)
+                
+                skel_img, rend_img = visualize(img, proc_param, joints[0], verts[0], cams[0], renderer)
+    
+#                 print (joints3d, theta)
+                frames_processed += 1
+                print ("FPS", frames_processed/float(time.time() - start))
+                
+                if streamer is not None:
+                    streamer.footage_socket.send(image_to_string(skel_img))
 
 
             except KeyboardInterrupt:
@@ -82,20 +102,20 @@ class StreamViewer:
         """
         self.keep_running = False
 
-def main():
-    port = PORT
+def main(sess, model, config, streamer):
+    port = "8880"#PORT
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port',
-                        help='The port which you want the Streaming Viewer to use, default'
-                             ' is ' + PORT, required=False)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('-p', '--port',
+#                         help='The port which you want the Streaming Viewer to use, default'
+#                              ' is ' + PORT, required=False)
 
-    args = parser.parse_args()
-    if args.port:
-        port = args.port
+#     args = parser.parse_args()
+#     if args.port:
+#         port = args.port
 
     stream_viewer = StreamViewer(port)
-    stream_viewer.receive_stream()
+    stream_viewer.process_stream(sess, model, config, streamer)
 
 
 def preprocess_image(img, config):
@@ -121,6 +141,7 @@ def preprocess_image(img, config):
 
 def setup():
     config = flags.FLAGS
+    config(sys.argv)
     # Using pre-trained model, change this to use your own.
     config.load_path = src.config.PRETRAINED_MODEL
     config.batch_size = 1
@@ -128,7 +149,7 @@ def setup():
     sess = tf.Session()
     model = RunModel(config, sess=sess)
 
-    return sess, model
+    return sess, model, config
 
 
 def run_image(model, img, config):
@@ -142,11 +163,28 @@ def run_image(model, img, config):
     # shape is 10D shape coefficients of SMPL
     joints, verts, cams, joints3d, theta = model.predict(input_img, get_theta=True)
 
-    return joints3d, theta
+    return joints, verts, cams, joints3d, theta
+
+
+def visualize(img, proc_param, joints, verts, cam, renderer):
+    """
+    Renders the result in original image coordinate frame.
+    """
+    cam_for_render, vert_shifted, joints_orig = vis_util.get_original(
+        proc_param, verts, cam, joints, img_size=img.shape[:2])
+
+    # Render results
+    skel_img = vis_util.draw_skeleton(img, joints_orig)
+    rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
+    
+    return skel_img, rend_img_overlay
 
 
 if __name__ == '__main__':
-    main()
+    sess, model, config = setup()
+    print ("Setup is complete")
+    streamer = Streamer('171.64.70.232', '8080')
+    main(sess, model, config, streamer)
 
 
 
