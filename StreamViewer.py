@@ -189,7 +189,7 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
     rend_img_overlay = renderer(vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
     
     return skel_img, rend_img_overlay
-g
+
 
 if __name__ == '__main__':
     sess, model, config = setup()
