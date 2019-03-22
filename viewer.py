@@ -79,9 +79,9 @@ class StreamViewer:
                 id = int(id)
                 print(id)
                 self.current_frame = string_to_image(frame)
-
+                print (self.current_frame.shape)
                 # This shouldn't make any difference since we preprocessed before sending the image
-                input_img = np.expand_dims(input_img, 0)
+                input_img = np.expand_dims(self.current_frame, 0)
                 # Predict the joints
                 datum = op.Datum()
                 datum.cvInputData = input_img
