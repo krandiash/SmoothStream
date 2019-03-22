@@ -101,6 +101,7 @@ def scale_and_crop(image, scale, center, img_size):
 
     return crop, proc_param
 
+
 def preprocess_image(img):
     if img.shape[2] == 4:
         img = img[:, :, :3]

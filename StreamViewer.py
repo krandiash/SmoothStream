@@ -4,6 +4,8 @@ from __future__ import print_function
 import sys
 sys.path.append('/next/u/kgoel/hmr')
 sys.path.append('/next/u/kgoel/hmr/SmoothStream')
+sys.path.append('/next/u/kgoel/pose_estimation/openpose/build/python')
+from openpose import pyopenpose as op
 import argparse
 
 import cv2
@@ -64,6 +66,58 @@ class StreamViewer:
                 cv2.destroyAllWindows()
                 break
         print("Streaming Stopped!")
+
+
+    def process_stream_openpose(self, streamer=None):
+        self.keep_running = True
+        frames_processed = 0
+
+        params = dict()
+        params["model_folder"] = "/next/u/kgoel/pose_estimation/openpose/models/"
+
+        # Starting OpenPose
+        opWrapper = op.WrapperPython()
+        opWrapper.configure(params)
+        opWrapper.start()
+
+        while self.footage_socket and self.keep_running:
+            try:
+                if frames_processed == 0:
+                    start = time.time()
+
+                payload = self.footage_socket.recv_string()
+                frame, id = payload.split("__".encode())
+                id = int(id.decode())
+                print(id)
+                self.current_frame = string_to_image(frame)
+
+                # This shouldn't make any difference since we preprocessed before sending the image
+                input_img = np.expand_dims(input_img, 0)
+                # Predict the joints
+                datum = op.Datum()
+                datum.cvInputData = input_img
+                opWrapper.emplaceAndPop([datum])
+
+                print (datum.poseKeypoints)
+
+                # We should send this at some point
+                # message = combine_encoded_strings(nparray_to_string(joints), nparray_to_string(verts),
+                #                                   nparray_to_string(cams), nparray_to_string(joints3d),
+                #                                   nparray_to_string(theta))
+                #                 print (joints3d, theta)
+
+                frames_processed += 1
+                print("FPS", frames_processed / float(time.time() - start))
+
+                if streamer is not None:
+                    # streamer.footage_socket.send(image_to_string(skel_img))
+                    # streamer.footage_socket.send(image_to_string(rend_img))
+                    pass
+
+            except KeyboardInterrupt:
+                break
+        print("Streaming Stopped!")
+
 
     def process_stream(self, sess, model, config, streamer=None):
         self.keep_running = True
@@ -194,10 +248,16 @@ def visualize(img, proc_param, joints, verts, cam, renderer):
 
 
 if __name__ == '__main__':
-    sess, model, config = setup()
-    print ("Setup is complete")
-    streamer = Streamer('DN52eovi.SUNet', '8080')
-    main(sess, model, config, streamer)
+    openpose = True
+    if not openpose:
+        sess, model, config = setup()
+        print ("Setup is complete")
+        streamer = Streamer('DN52eovi.SUNet', '8080')
+        main(sess, model, config, streamer)
+    else:
+        streamer = Streamer('DN52eovi.SUNet', '8080')
+        main(streamer)
+
 
 
 
