@@ -85,6 +85,8 @@ class StreamViewer:
                 datum.cvInputData = self.current_frame
                 opWrapper.emplaceAndPop([datum])
 
+                print (dir(datum))
+
                 print(datum.poseKeypoints)
 
                 frames_processed += 1
