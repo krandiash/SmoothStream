@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+import sys
+
+sys.path.append('/next/u/kgoel/pose_estimation/openpose/build/python')
+from openpose import pyopenpose as op
 import argparse
 
 import cv2
@@ -5,7 +12,13 @@ import numpy as np
 import zmq
 
 from constants import PORT
-from utils import string_to_image
+from utils import *
+
+from absl import flags
+import skimage.io as io
+import time
+
+from Streamer import Streamer
 
 
 class StreamViewer:
@@ -34,7 +47,6 @@ class StreamViewer:
             try:
                 frame = self.footage_socket.recv_string()
                 self.current_frame = string_to_image(frame)
-                print ("YES")
 
                 if display:
                     cv2.imshow("Stream", self.current_frame)
@@ -45,6 +57,50 @@ class StreamViewer:
                 break
         print("Streaming Stopped!")
 
+    def process_stream_openpose(self, streamer=None):
+        self.keep_running = True
+        frames_processed = 0
+
+        params = dict()
+        params["model_folder"] = "/next/u/kgoel/pose_estimation/openpose/models/"
+
+        # Starting OpenPose
+        opWrapper = op.WrapperPython()
+        opWrapper.configure(params)
+        opWrapper.start()
+
+        while self.footage_socket and self.keep_running:
+            try:
+                if frames_processed == 0:
+                    start = time.time()
+
+                payload = self.footage_socket.recv_string()
+                frame, id = payload.split("__".encode())
+                id = int(id.decode())
+                print(id)
+                self.current_frame = string_to_image(frame)
+
+                # This shouldn't make any difference since we preprocessed before sending the image
+                input_img = np.expand_dims(input_img, 0)
+                # Predict the joints
+                datum = op.Datum()
+                datum.cvInputData = input_img
+                opWrapper.emplaceAndPop([datum])
+
+                print(datum.poseKeypoints)
+
+                frames_processed += 1
+                print("FPS", frames_processed / float(time.time() - start))
+
+                if streamer is not None:
+                    # streamer.footage_socket.send(image_to_string(skel_img))
+                    # streamer.footage_socket.send(image_to_string(rend_img))
+                    pass
+
+            except KeyboardInterrupt:
+                break
+        print("Streaming Stopped!")
+
     def stop(self):
         """
         Sets 'keep_running' to False to stop the running loop if running.
@@ -52,21 +108,17 @@ class StreamViewer:
         """
         self.keep_running = False
 
-def main():
-    port = PORT
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port',
-                        help='The port which you want the Streaming Viewer to use, default'
-                             ' is ' + PORT, required=False)
-
-    args = parser.parse_args()
-    if args.port:
-        port = args.port
-
+def main(streamer):
+    port = "8880"
     stream_viewer = StreamViewer(port)
-    stream_viewer.receive_stream()
-
+    stream_viewer.process_stream_openpose(streamer)
 
 if __name__ == '__main__':
-    main()
+    streamer = Streamer('DN52eovi.SUNet', '8080')
+    main(streamer)
+
+
+
+
+
