@@ -113,7 +113,7 @@ def main(streamer):
     stream_viewer.process_stream_openpose(streamer)
 
 if __name__ == '__main__':
-    streamer = Streamer('DN0a1f870b.SUNet', '8080')
+    streamer = Streamer('DN52eo4c.SUNet', '8080')
     main(streamer)
 
 
