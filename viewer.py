@@ -63,6 +63,8 @@ class StreamViewer:
 
         params = dict()
         params["model_folder"] = "/next/u/kgoel/pose_estimation/openpose/models/"
+        params["face"] = True
+        params["hand"] = True
 
         # Starting OpenPose
         opWrapper = op.WrapperPython()
