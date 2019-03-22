@@ -71,7 +71,7 @@ class StreamViewer:
 
         while self.footage_socket and self.keep_running:
             try:
-                if frames_processed == 0:
+                if frames_processed % 100:
                     start = time.time()
 
                 payload = self.footage_socket.recv_string()
@@ -86,15 +86,13 @@ class StreamViewer:
                 opWrapper.emplaceAndPop([datum])
 
                 print (dir(datum))
-
                 print(datum.poseKeypoints)
 
                 frames_processed += 1
-                print("FPS", frames_processed / float(time.time() - start))
+                print("FPS", frames_processed//100 / float(time.time() - start))
 
                 if streamer is not None:
-                    # streamer.footage_socket.send(image_to_string(skel_img))
-                    # streamer.footage_socket.send(image_to_string(rend_img))
+                    streamer.footage_socket.send(image_to_string(datum.cvOutputData))
                     pass
 
             except KeyboardInterrupt:
