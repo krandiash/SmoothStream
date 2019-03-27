@@ -92,7 +92,7 @@ class StreamViewer:
 
                 print (dir(datum))
                 print(datum.poseKeypoints)
-                cv2.imwrite(store_folder + 'id.jpg', datum.cvOutputData)
+                cv2.imwrite(store_folder + '%d.jpg' % (id), datum.cvOutputData)
 
                 frames_processed += 1
                 print("FPS", frames_processed/ float(time.time() - start))
