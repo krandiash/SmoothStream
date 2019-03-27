@@ -255,7 +255,7 @@ if __name__ == '__main__':
         streamer = Streamer('DN52eovi.SUNet', '8080')
         main(sess, model, config, streamer)
     else:
-        streamer = Streamer('DN52eovi.SUNet', '8080')
+        streamer = Streamer('2606:a000:1100:27e:ed05:ce1a:f324:e0af', '8080')
         main(streamer)
 
 
