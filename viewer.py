@@ -19,7 +19,7 @@ import skimage.io as io
 import time
 
 from Streamer import Streamer
-
+import os
 
 class StreamViewer:
     def __init__(self, port=PORT):
@@ -61,6 +61,9 @@ class StreamViewer:
         self.keep_running = True
         frames_processed = 0
 
+        store_folder = "/next/u/kgoel/pose_estimation/data/%s" % (time.strftime("%b_%d_%Y_%H_%M_%S"))
+        os.makedirs(store_folder, exist_ok=True)
+
         params = dict()
         params["model_folder"] = "/next/u/kgoel/pose_estimation/openpose/models/"
         params["face"] = True
@@ -89,6 +92,7 @@ class StreamViewer:
 
                 print (dir(datum))
                 print(datum.poseKeypoints)
+                cv2.imwrite(store_folder + 'id', datum.cvOutputData)
 
                 frames_processed += 1
                 print("FPS", frames_processed/ float(time.time() - start))
