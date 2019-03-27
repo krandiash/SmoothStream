@@ -90,9 +90,11 @@ class StreamViewer:
                 datum.cvInputData = self.current_frame
                 opWrapper.emplaceAndPop([datum])
 
-                print (dir(datum))
-                print(datum.poseKeypoints)
-                cv2.imwrite(store_folder + '%d.jpg' % (id), datum.cvOutputData)
+                # print (dir(datum))
+                # print(datum.poseKeypoints)
+                cv2.imwrite(store_folder + 'original_%d.jpg' % (id), self.current_frame)
+                cv2.imwrite(store_folder + 'rendered_%d.jpg' % (id), datum.cvOutputData)
+                np.save(store_folder + 'keypoints_%d' % (id), datum.poseKeypoints)
 
                 frames_processed += 1
                 print("FPS", frames_processed/ float(time.time() - start))
