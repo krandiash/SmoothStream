@@ -115,7 +115,7 @@ def main(streamer):
     stream_viewer.process_stream_openpose(streamer)
 
 if __name__ == '__main__':
-    streamer = Streamer('171.66.183.145', '8080')
+    streamer = Streamer('DN2lk5dsg.stanford.edu', '8080')
     main(streamer)
 
 
