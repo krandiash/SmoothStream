@@ -11,7 +11,6 @@ import cv2
 import numpy as np
 import zmq
 
-from constants import PORT
 from utils import *
 
 from absl import flags
@@ -21,8 +20,9 @@ import time
 from Streamer import Streamer
 import os
 
+
 class StreamViewer:
-    def __init__(self, port=PORT):
+    def __init__(self, port):
         """
         Binds the computer to a ip address and starts listening for incoming streams.
 
@@ -57,17 +57,22 @@ class StreamViewer:
                 break
         print("Streaming Stopped!")
 
-    def process_stream_openpose(self, streamer=None):
+    def process_stream_openpose(self, data_store, openpose_model_store, streamer=None,
+                                face=False, hand=False, store=True):
+
         self.keep_running = True
         frames_processed = 0
 
-        store_folder = "/next/u/kgoel/pose_estimation/data/%s/" % (time.strftime("%b_%d_%Y_%H_%M_%S"))
+        separator = "__".encode()
+
+        store_folder = data_store + "%s/" % (time.strftime("%b_%d_%Y_%H_%M_%S"))
         os.makedirs(store_folder, exist_ok=True)
 
+        # Build out param dict for OpenPose
         params = dict()
-        params["model_folder"] = "/next/u/kgoel/pose_estimation/openpose/models/"
-        # params["face"] = True
-        # params["hand"] = True
+        params["model_folder"] = openpose_model_store
+        params["face"] = face
+        params["hand"] = hand
 
         # Starting OpenPose
         opWrapper = op.WrapperPython()
@@ -80,28 +85,31 @@ class StreamViewer:
                     start = time.time()
 
                 payload = self.footage_socket.recv_string()
+
                 frame, id = payload.split("__")
                 id = int(id)
                 print(id)
+
                 self.current_frame = string_to_image(frame)
                 print (self.current_frame.shape)
+
                 # Predict the joints
                 datum = op.Datum()
                 datum.cvInputData = self.current_frame
                 opWrapper.emplaceAndPop([datum])
 
-                # print (dir(datum))
-                # print(datum.poseKeypoints)
-                cv2.imwrite(store_folder + 'original_%d.jpg' % (id), self.current_frame)
-                cv2.imwrite(store_folder + 'rendered_%d.jpg' % (id), datum.cvOutputData)
-                np.save(store_folder + 'keypoints_%d' % (id), datum.poseKeypoints)
+                if store:
+                    cv2.imwrite(store_folder + 'original_%d.jpg' % id, self.current_frame)
+                    cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
+                    np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
 
                 frames_processed += 1
-                print("FPS", frames_processed/ float(time.time() - start))
+                print("fps:", frames_processed/float(time.time() - start))
 
                 if streamer is not None:
-                    streamer.footage_socket.send(image_to_string(datum.cvOutputData))
-                    pass
+                    payload = image_to_string(datum.poseKeypoints) + separator + str(id).encode()
+                    # streamer.footage_socket.send(image_to_string(datum.cvOutputData))
+                    streamer.footage_socket.send(payload)
 
             except KeyboardInterrupt:
                 break
@@ -115,14 +123,30 @@ class StreamViewer:
         self.keep_running = False
 
 
-def main(streamer):
-    port = "8880"
-    stream_viewer = StreamViewer(port)
-    stream_viewer.process_stream_openpose(streamer)
+def main(streamer, hostport, face, hand, data_store, openpose_model_store, store):
+    stream_viewer = StreamViewer(hostport)
+    stream_viewer.process_stream_openpose(streamer, data_store, openpose_model_store, face, hand, store)
+
 
 if __name__ == '__main__':
-    streamer = Streamer('DN2lk5dsg.stanford.edu', '8080')
-    main(streamer)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-hp', '--hostport', help='The port which you want to receive data on', default=8880)
+    parser.add_argument('-s', '--server', help='IP Address of the destination server', required=True)
+    parser.add_argument('-sp', '--sendport', help='The port of the destination server', default=8080)
+
+    parser.add_argument('--face', help='Use face model', action='store_true')
+    parser.add_argument('--hand', help='Use hands model', action='store_true')
+
+    parser.add_argument('--store', help='Whether to store the data', action='store_true')
+    parser.add_argument('--data_store', help='Where to store the data',
+                        default='/next/u/kgoel/pose_estimation/data/')
+    parser.add_argument('--openpose_model_store', help='Where to load pose model from',
+                        default='/next/u/kgoel/pose_estimation/openpose/models/')
+
+    args = parser.parse_args()
+
+    streamer = Streamer(args.server, int(args.sendport))
+    main(streamer, args.hostport, args.face, args.hand, args.data_store, args.openpose_model_store, args.store)
 
 
 
