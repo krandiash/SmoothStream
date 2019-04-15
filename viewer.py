@@ -10,7 +10,7 @@ import argparse
 import cv2
 import numpy as np
 import zmq
-
+from zlib import compress, decompress
 from utils import *
 
 import skimage.io as io
@@ -63,7 +63,7 @@ class StreamViewer:
         self.keep_running = True
         frames_processed = 0
 
-        separator = "__".encode()
+        separator = "____".encode()
 
         store_folder = data_store + "%s/" % (time.strftime("%b_%d_%Y_%H_%M_%S"))
         os.makedirs(store_folder, exist_ok=True)
@@ -94,13 +94,13 @@ class StreamViewer:
                 payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
                 timing_recv.append(time.time() - ready)
 
-
                 ready = time.time()
                 frame, id = payload.split("__")
                 id = int(id)
 
                 print(id)
 
+                frame = decompress(frame)
                 frame = string_to_image(frame)
                 # print (self.current_frame.shape)
 
@@ -126,6 +126,8 @@ class StreamViewer:
                 if streamer is not None:
                     payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                               + separator + str(id).encode()
+
+                    payload = compress(payload)
 
                     try:
                         streamer.footage_socket.send(payload)#, flags=zmq.NOBLOCK)

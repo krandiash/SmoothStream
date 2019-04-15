@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 import zmq
-# from zlib import compress, decompress
+from zlib import compress, decompress
 
 from camera.Camera import Camera
 from constants import PORT, SERVER_ADDRESS
@@ -44,7 +44,7 @@ class Streamer:
         self.keep_running = True
 
         id = 0
-        separator = "__".encode()
+        separator = "____".encode()
 
         start = time.time()
 
@@ -58,12 +58,11 @@ class Streamer:
                 # Preprocessing?
                 # crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(crop)
-
                 image_as_string = image_to_string(frame)  # encode the frame
 
                 # Compression?
                 # print (len(image_as_string))
-                # image_as_string = compress(image_as_string)
+                image_as_string = compress(image_as_string)
                 # print (len(image_as_string))
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it

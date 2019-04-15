@@ -9,6 +9,8 @@ from utils import string_to_image
 
 import base64
 import time
+from zlib import compress, decompress
+
 
 
 
@@ -29,6 +31,17 @@ class StreamViewer:
         self.keep_running = True
         self.current_data = None
 
+    def receive_payload(self, payload):
+        data, frame, id = payload.split("____")
+        id = int(id)
+        print(id)
+        self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
+        self.current_frame = string_to_image(frame)
+
+        if not self.no_display:
+            cv2.imshow("Stream", self.current_frame)
+            cv2.waitKey(1)
+
     def receive_stream(self, no_display=False):
         """
         Displays displayed stream in a window if no arguments are passed.
@@ -37,29 +50,13 @@ class StreamViewer:
         :return: None
         """
         self.keep_running = True
+        self.no_display = no_display
 
-        timing_proc = []
-        timing_recv = []
         while self.footage_socket and self.keep_running:
             try:
-                ready = time.time()
                 payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
-                timing_recv.append(time.time() - ready)
-
-                ready = time.time()
-                data, frame, id = payload.split("__")
-                id = int(id)
-                print(id)
-                self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
-                self.current_frame = string_to_image(frame)
-
-                if not no_display:
-                    cv2.imshow("Stream", self.current_frame)
-                    cv2.waitKey(1)
-
-                timing_proc.append(time.time() - ready)
-                print (np.mean(timing_recv[-30:]))
-                print (np.mean(timing_proc[-30:]))
+                payload = decompress(payload)
+                self.receive_payload(payload)
 
             except zmq.error.Again:
                 pass
