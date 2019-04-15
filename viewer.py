@@ -132,6 +132,8 @@ class StreamViewer:
                     except zmq.error.Again:
                         pass
 
+            except zmq.error.Again:
+                pass
             except KeyboardInterrupt:
                 break
         print("Streaming Stopped!")
