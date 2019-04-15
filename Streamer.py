@@ -2,14 +2,15 @@ import argparse
 
 import cv2
 import zmq
+# from zlib import compress, decompress
 
 from camera.Camera import Camera
 from constants import PORT, SERVER_ADDRESS
 from utils import image_to_string
 
-from absl import flags
 import numpy as np
 import time
+
 
 class Streamer:
 
@@ -27,37 +28,53 @@ class Streamer:
         self.footage_socket.connect('tcp://' + server_address + ':' + port)
         self.keep_running = True
 
-    def start(self):
+    def start(self, framerate):
         """
         Starts sending the stream to the Viewer.
         Creates a camera, takes a image frame converts the frame to string and sends the string across the network
         :return: None
         """
+
+        # config = flags.FLAGS
+
         print("Streaming Started...")
-        config = flags.FLAGS
         camera = Camera()
         camera.start_capture()
+
         self.keep_running = True
 
         id = 0
         separator = "__".encode()
 
+        start = time.time()
+
         while self.footage_socket and self.keep_running:
             try:
                 frame = camera.current_frame.read()  # grab the current frame
-                time.sleep(1/15.)
+                time.sleep(0.6/framerate)  # control the frame rate (works best for 15 fps)
 
+                # Preprocessing?
                 # crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(crop)
-                image_as_string = image_to_string(frame)
 
-                self.footage_socket.send(image_as_string + separator + str(id).encode())
+                image_as_string = image_to_string(frame)  # encode the frame
+
+                # Compression?
+                # print (len(image_as_string))
+                # image_as_string = compress(image_as_string)
+                # print (len(image_as_string))
+
+                self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
+
                 print (id)
                 id += 1
+
+                print (f'Framerate: {round(id/(time.time() - start), 2)}fps')
 
             except KeyboardInterrupt:
                 cv2.destroyAllWindows()
                 break
+
         print("Streaming Stopped!")
         cv2.destroyAllWindows()
 
@@ -68,6 +85,7 @@ class Streamer:
         """
         self.keep_running = False
 
+
 def resize_img(img, scale_factor):
     new_size = (np.floor(np.array(img.shape[0:2]) * scale_factor)).astype(int)
     new_img = cv2.resize(img, (new_size[1], new_size[0]))
@@ -76,6 +94,7 @@ def resize_img(img, scale_factor):
         new_size[0] / float(img.shape[0]), new_size[1] / float(img.shape[1])
     ]
     return new_img, actual_factor
+
 
 def scale_and_crop(image, scale, center, img_size):
     image_scaled, scale_factors = resize_img(image, scale)
@@ -122,28 +141,24 @@ def preprocess_image(img):
 
     return crop, proc_param, img
 
-def main():
-    port = PORT
-    server_address = SERVER_ADDRESS
 
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--server',
-                        help='IP Address of the server which you want to connect to, default'
-                             ' is ' + SERVER_ADDRESS,
-                        required=True)
+                        help='IP Address of the server which you want to connect to', required=True)
     parser.add_argument('-p', '--port',
-                        help='The port which you want the Streaming Server to use, default'
-                             ' is ' + PORT, required=False)
+                        help='The port which you want the Streaming Server to use', required=True)
+    parser.add_argument('-f', '--framerate',
+                        help='Framerate at which to broadcast stream', default=15.0)
 
     args = parser.parse_args()
 
-    if args.port:
-        port = args.port
-    if args.server:
-        server_address = args.server
+    port = args.port
+    server_address = args.server
+    framerate = float(args.framerate)
 
     streamer = Streamer(server_address, port)
-    streamer.start()
+    streamer.start(framerate)
 
 
 if __name__ == '__main__':
