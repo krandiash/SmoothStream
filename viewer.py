@@ -108,7 +108,7 @@ class StreamViewer:
                 print (datum.poseKeypoints)
 
                 if streamer is not None:
-                    payload = image_to_string(datum.poseKeypoints) + separator + str(id).encode()
+                    payload = base64.b64encode(datum.poseKeypoints) + separator + str(id).encode()
                     # streamer.footage_socket.send(image_to_string(datum.cvOutputData))
                     streamer.footage_socket.send(payload)
 

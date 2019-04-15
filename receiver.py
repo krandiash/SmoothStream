@@ -7,6 +7,8 @@ import zmq
 from constants import PORT
 from utils import string_to_image
 
+import base64
+
 
 
 
@@ -42,7 +44,7 @@ class StreamViewer:
                 id = int(id)
                 print(id)
 
-                self.current_data = string_to_image(data)
+                self.current_data = base64.b64decode(data)
                 print (self.current_data)
                 # self.current_frame = string_to_image(frame)
                 print ("YES")
