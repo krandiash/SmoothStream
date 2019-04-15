@@ -124,7 +124,7 @@ class StreamViewer:
 
 def main(streamer, hostport, face, hand, data_store, openpose_model_store, store):
     stream_viewer = StreamViewer(hostport)
-    stream_viewer.process_stream_openpose(streamer, data_store, openpose_model_store, face, hand, store)
+    stream_viewer.process_stream_openpose(data_store, openpose_model_store, streamer, face, hand, store)
 
 
 if __name__ == '__main__':
