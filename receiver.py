@@ -8,6 +8,7 @@ from constants import PORT
 from utils import string_to_image
 
 import base64
+import time
 
 
 
@@ -36,15 +37,21 @@ class StreamViewer:
         :return: None
         """
         self.keep_running = True
+
+        timing = []
         while self.footage_socket and self.keep_running:
             try:
-                payload = self.footage_socket.recv_string(flags = zmq.NOBLOCK)
+                payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
 
+                ready = time.time()
                 data, frame, id = payload.split("__")
                 id = int(id)
                 print(id)
                 self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
                 self.current_frame = string_to_image(frame)
+
+                timing.append(time.time() - ready)
+                print (np.mean(timing[-30:]))
 
                 if not no_display:
                     cv2.imshow("Stream", self.current_frame)
