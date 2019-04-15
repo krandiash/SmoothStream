@@ -45,7 +45,7 @@ class StreamViewer:
         self.keep_running = True
         while self.footage_socket and self.keep_running:
             try:
-                frame = self.footage_socket.recv_string()
+                frame = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
                 self.current_frame = string_to_image(frame)
 
                 if display:
@@ -91,7 +91,7 @@ class StreamViewer:
 
             try:
                 ready = time.time()
-                payload = self.footage_socket.recv_string(flags = zmq.NOBLOCK)
+                payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
                 timing_recv.append(time.time() - ready)
 
 
