@@ -95,7 +95,7 @@ class StreamViewer:
                 timing_recv.append(time.time() - ready)
 
                 ready = time.time()
-                frame, id = payload.split("__")
+                frame, id = payload.split("____")
                 id = int(id)
 
                 print(id)
