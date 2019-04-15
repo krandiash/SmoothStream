@@ -85,32 +85,36 @@ class StreamViewer:
                 if frames_processed == 0:
                     start = time.time()
 
-                payload = self.footage_socket.recv_string()
+                try:
+                    payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
 
-                frame, id = payload.split("__")
-                id = int(id)
-                print(id)
+                    frame, id = payload.split("__")
+                    id = int(id)
+                    print(id)
 
-                self.current_frame = string_to_image(frame)
-                # print (self.current_frame.shape)
+                    self.current_frame = string_to_image(frame)
+                    # print (self.current_frame.shape)
 
-                # Predict the joints
-                datum = op.Datum()
-                datum.cvInputData = self.current_frame
-                opWrapper.emplaceAndPop([datum])
+                    # Predict the joints
+                    datum = op.Datum()
+                    datum.cvInputData = self.current_frame
+                    opWrapper.emplaceAndPop([datum])
 
-                if store:
-                    cv2.imwrite(store_folder + 'original_%d.jpg' % id, self.current_frame)
-                    cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
-                    np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
+                    if store:
+                        cv2.imwrite(store_folder + 'original_%d.jpg' % id, self.current_frame)
+                        cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
+                        np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
 
-                frames_processed += 1
-                print("fps:", frames_processed/float(time.time() - start))
+                    frames_processed += 1
+                    print("fps:", frames_processed/float(time.time() - start))
 
-                if streamer is not None:
-                    payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
-                              + separator + str(id).encode()
-                    streamer.footage_socket.send(payload)
+                    if streamer is not None:
+                        payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                                  + separator + str(id).encode()
+                        streamer.footage_socket.send(payload)
+
+                except zmq.Again:
+                    pass
 
             except KeyboardInterrupt:
                 break
