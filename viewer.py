@@ -100,7 +100,7 @@ class StreamViewer:
 
                 print(id)
 
-                frame = decompress(frame.decode())
+                frame = decompress(frame.encode())
                 frame = string_to_image(frame)
                 # print (self.current_frame.shape)
 
