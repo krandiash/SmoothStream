@@ -18,6 +18,7 @@ import time
 
 from Streamer import Streamer
 import os
+import queue
 
 
 class StreamViewer:
@@ -80,6 +81,8 @@ class StreamViewer:
         opWrapper.configure(params)
         opWrapper.start()
 
+        datums = queue.Queue()
+
         while self.footage_socket and self.keep_running:
             try:
                 if frames_processed == 0:
@@ -90,28 +93,36 @@ class StreamViewer:
 
                     frame, id = payload.split("__")
                     id = int(id)
+
                     print(id)
 
-                    self.current_frame = string_to_image(frame)
+                    frame = string_to_image(frame)
                     # print (self.current_frame.shape)
 
-                    # Predict the joints
+                    # Add in the current frame
                     datum = op.Datum()
-                    datum.cvInputData = self.current_frame
-                    opWrapper.emplaceAndPop([datum])
+                    datum.cvInputData = frame
 
-                    if store:
-                        cv2.imwrite(store_folder + 'original_%d.jpg' % id, self.current_frame)
-                        cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
-                        np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
+                    datums.put_nowait((datum, id, frame))
 
-                    frames_processed += 1
-                    print("fps:", frames_processed/float(time.time() - start))
+                    opWrapper.waitAndEmplace([datum])
 
-                    if streamer is not None:
-                        payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
-                                  + separator + str(id).encode()
-                        streamer.footage_socket.send(payload)
+                    if datums:
+                        datum, id, frame = datums.get_nowait()
+                        opWrapper.waitAndPop([datum])
+
+                        if store:
+                            cv2.imwrite(store_folder + 'original_%d.jpg' % id, frame)
+                            cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
+                            np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
+
+                        frames_processed += 1
+                        print("fps:", frames_processed/float(time.time() - start))
+
+                        if streamer is not None:
+                            payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                                      + separator + str(id).encode()
+                            streamer.footage_socket.send(payload)
 
                 except zmq.Again:
                     pass
