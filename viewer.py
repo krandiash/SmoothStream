@@ -108,8 +108,9 @@ class StreamViewer:
                 print (datum.poseKeypoints)
 
                 if streamer is not None:
-                    payload = base64.b64encode(datum.poseKeypoints) + separator + str(id).encode()
-                    # streamer.footage_socket.send(image_to_string(datum.cvOutputData))
+                    payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                              + separator + str(id).encode()
+                    # streamer.footage_socket.send()
                     streamer.footage_socket.send(payload)
 
             except KeyboardInterrupt:

@@ -40,14 +40,11 @@ class StreamViewer:
             try:
                 payload = self.footage_socket.recv_string()
 
-                data, id = payload.split("__")
+                frame, data, id = payload.split("__")
                 id = int(id)
                 print(id)
-
-                self.current_data = base64.b64decode(data)
-                print (self.current_data)
-                # self.current_frame = string_to_image(frame)
-                print ("YES")
+                self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
+                self.current_frame = string_to_image(frame)
 
                 if not no_display:
                     cv2.imshow("Stream", self.current_frame)
