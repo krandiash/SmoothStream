@@ -13,7 +13,6 @@ import zmq
 
 from utils import *
 
-from absl import flags
 import skimage.io as io
 import time
 
