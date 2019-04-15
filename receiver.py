@@ -38,10 +38,13 @@ class StreamViewer:
         """
         self.keep_running = True
 
-        timing = []
+        timing_proc = []
+        timing_recv = []
         while self.footage_socket and self.keep_running:
             try:
+                ready = time.time()
                 payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
+                timing_recv.append(time.time() - ready)
 
                 ready = time.time()
                 data, frame, id = payload.split("__")
@@ -50,12 +53,13 @@ class StreamViewer:
                 self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
                 self.current_frame = string_to_image(frame)
 
-                timing.append(time.time() - ready)
-                print (np.mean(timing[-30:]))
-
                 if not no_display:
                     cv2.imshow("Stream", self.current_frame)
                     cv2.waitKey(1)
+
+                timing_proc.append(time.time() - ready)
+                print (np.mean(timing_recv[-30:]))
+                print (np.mean(timing_proc[-30:]))
 
             except zmq.error.Again:
                 pass

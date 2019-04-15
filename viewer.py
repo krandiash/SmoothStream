@@ -128,7 +128,7 @@ class StreamViewer:
                               + separator + str(id).encode()
 
                     try:
-                        streamer.footage_socket.send(payload, zmq.NOBLOCK)
+                        streamer.footage_socket.send(payload, flags=zmq.NOBLOCK)
                     except zmq.error.Again:
                         pass
 
