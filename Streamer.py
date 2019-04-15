@@ -62,7 +62,7 @@ class Streamer:
 
                 # Compression?
                 # print (len(image_as_string))
-                image_as_string = compress(image_as_string)
+                image_as_string = str(compress(image_as_string)).encode()
                 # print (len(image_as_string))
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
