@@ -92,7 +92,7 @@ class StreamViewer:
                 frame, id = payload.split(separator)#"____")
                 id = int(id)
                 frame = blosc.unpack_array(frame)
-
+                print (frame)
                 print(id)
 
                 # frame = string_to_image(frame)
