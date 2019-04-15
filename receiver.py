@@ -50,6 +50,9 @@ class StreamViewer:
                     cv2.imshow("Stream", self.current_frame)
                     cv2.waitKey(1)
 
+            except zmq.error.Again:
+                pass
+
             except KeyboardInterrupt:
                 cv2.destroyAllWindows()
                 break
