@@ -57,7 +57,7 @@ class StreamViewer:
         print("Streaming Stopped!")
 
     def process_stream_openpose(self, data_store, openpose_model_store, streamer=None,
-                                face=False, hand=False, store=True):
+                                face=False, hand=False, store=False):
 
         self.keep_running = True
         frames_processed = 0
@@ -92,7 +92,7 @@ class StreamViewer:
                 print(id)
 
                 self.current_frame = string_to_image(frame)
-                print (self.current_frame.shape)
+                # print (self.current_frame.shape)
 
                 # Predict the joints
                 datum = op.Datum()
@@ -107,12 +107,9 @@ class StreamViewer:
                 frames_processed += 1
                 print("fps:", frames_processed/float(time.time() - start))
 
-                print (datum.poseKeypoints)
-
                 if streamer is not None:
                     payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                               + separator + str(id).encode()
-                    # streamer.footage_socket.send()
                     streamer.footage_socket.send(payload)
 
             except KeyboardInterrupt:
