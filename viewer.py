@@ -10,7 +10,7 @@ import argparse
 import cv2
 import numpy as np
 import zmq
-from zlib import compress, decompress
+import blosc
 from utils import *
 
 import skimage.io as io
@@ -81,27 +81,21 @@ class StreamViewer:
         opWrapper.configure(params)
         opWrapper.start()
 
-        timing_inf = []
-        timing_recv = []
-
         while self.footage_socket and self.keep_running:
 
             if frames_processed == 0:
                 start = time.time()
 
             try:
-                ready = time.time()
-                payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
-                timing_recv.append(time.time() - ready)
 
-                ready = time.time()
+                payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id = payload.split("____")
                 id = int(id)
+                frame = blosc.unpack_array(frame)
 
                 print(id)
 
-                frame = decompress(frame.encode())
-                frame = string_to_image(frame)
+                # frame = string_to_image(frame)
                 # print (self.current_frame.shape)
 
                 # Add in the current frame
@@ -110,9 +104,6 @@ class StreamViewer:
 
                 opWrapper.emplaceAndPop([datum])
 
-                timing_inf.append(time.time() - ready)
-                print(np.mean(timing_recv[-30:]))
-                print (np.mean(timing_inf[-30:]))
 
                 if store:
                     print ("Store.")

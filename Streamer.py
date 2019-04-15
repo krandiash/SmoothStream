@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 import zmq
-from zlib import compress, decompress
+import blosc
 
 from camera.Camera import Camera
 from constants import PORT, SERVER_ADDRESS
@@ -58,11 +58,14 @@ class Streamer:
                 # Preprocessing?
                 # crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(crop)
-                image_as_string = image_to_string(frame)  # encode the frame
+
+                # image_as_string = image_to_string(frame)  # encode the frame
 
                 # Compression?
                 # print (len(image_as_string))
-                image_as_string = str(compress(image_as_string)).encode()
+                image_as_string = blosc.pack_array(frame)
+                # print (len(image_as_string))
+                # image_as_string = str(compress(image_as_string)).encode()
                 # print (len(image_as_string))
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
