@@ -38,7 +38,7 @@ class StreamViewer:
         self.keep_running = True
         while self.footage_socket and self.keep_running:
             try:
-                payload = self.footage_socket.recv_string()
+                payload = self.footage_socket.recv_string(flags = zmq.NOBLOCK)
 
                 data, frame, id = payload.split("__")
                 id = int(id)
