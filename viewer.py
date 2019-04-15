@@ -89,7 +89,7 @@ class StreamViewer:
             try:
 
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
-                frame, id = payload.split("____")
+                frame, id = payload.split(separator)#"____")
                 id = int(id)
                 frame = blosc.unpack_array(frame)
 
