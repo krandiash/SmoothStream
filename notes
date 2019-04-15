@@ -3,10 +3,11 @@
 # where 10.79.12.88 is the IP address of the cloud server and 8880 is the port. To check IP just type
 > hostname -I
 # and copy the first IP address.
+
 # In another terminal window on the computer, run
-> python viewer.py -p 8080
+> python receiver.py -p 8080
 # Then, run
-> python StreamViewer.py
+> python viewer.py
 # on the server.
 
 # (1) Edit the frame rate in Streamer.py by changing the sleep interval

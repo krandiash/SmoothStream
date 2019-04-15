@@ -8,6 +8,9 @@ from constants import PORT
 from utils import string_to_image
 
 
+
+
+
 class StreamViewer:
     def __init__(self, port=PORT):
         """
@@ -21,8 +24,9 @@ class StreamViewer:
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
         self.current_frame = None
         self.keep_running = True
+        self.current_data = None
 
-    def receive_stream(self, display=True):
+    def receive_stream(self, no_display=False):
         """
         Displays displayed stream in a window if no arguments are passed.
         Keeps updating the 'current_frame' attribute with the most recent frame, this can be accessed using 'self.current_frame'
@@ -32,11 +36,18 @@ class StreamViewer:
         self.keep_running = True
         while self.footage_socket and self.keep_running:
             try:
-                frame = self.footage_socket.recv_string()
-                self.current_frame = string_to_image(frame)
+                payload = self.footage_socket.recv_string()
+
+                data, id = payload.split("__")
+                id = int(id)
+                print(id)
+
+                self.current_data = string_to_image(data)
+                print (self.current_data)
+                # self.current_frame = string_to_image(frame)
                 print ("YES")
 
-                if display:
+                if not no_display:
                     cv2.imshow("Stream", self.current_frame)
                     cv2.waitKey(1)
 
@@ -52,20 +63,16 @@ class StreamViewer:
         """
         self.keep_running = False
 
-def main():
-    port = PORT
 
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port',
-                        help='The port which you want the Streaming Viewer to use, default'
-                             ' is ' + PORT, required=False)
+    parser.add_argument('-p', '--port', help='The port which you want the Streaming Viewer to use', required=True)
+    parser.add_argument('-d', '--no_display', help='Don\'t display images', action='store_true')
 
     args = parser.parse_args()
-    if args.port:
-        port = args.port
 
-    stream_viewer = StreamViewer(port)
-    stream_viewer.receive_stream()
+    stream_viewer = StreamViewer(args.port)
+    stream_viewer.receive_stream(args.no_display)
 
 
 if __name__ == '__main__':
