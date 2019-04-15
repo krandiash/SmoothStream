@@ -25,7 +25,7 @@ class Streamer:
         print("Connecting to ", server_address, "at", port)
         context = zmq.Context()
         self.footage_socket = context.socket(zmq.PUB)
-        self.footage_socket.connect('tcp://' + server_address + ':' + port)
+        self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(port))
         self.keep_running = True
 
     def start(self, framerate=None):
