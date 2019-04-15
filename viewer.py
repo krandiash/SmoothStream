@@ -93,7 +93,7 @@ class StreamViewer:
                 ready = time.time()
                 payload = self.footage_socket.recv_string()
                 timing_recv.append(time.time() - ready)
-                print(np.mean(timing_recv[-30:]))
+
 
                 ready = time.time()
                 frame, id = payload.split("__")
@@ -111,6 +111,7 @@ class StreamViewer:
                 opWrapper.emplaceAndPop([datum])
 
                 timing_inf.append(time.time() - ready)
+                print(np.mean(timing_recv[-30:]))
                 print (np.mean(timing_inf[-30:]))
 
                 if store:
