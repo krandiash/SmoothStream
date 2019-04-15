@@ -114,7 +114,11 @@ class StreamViewer:
                 if streamer is not None:
                     payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                               + separator + str(id).encode()
-                    streamer.footage_socket.send(payload)
+
+                    try:
+                        streamer.footage_socket.send(payload, zmq.NOBLOCK)
+                    except zmq.error.Again:
+                        pass
 
             except KeyboardInterrupt:
                 break
