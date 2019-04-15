@@ -40,7 +40,7 @@ class StreamViewer:
             try:
                 payload = self.footage_socket.recv_string()
 
-                frame, data, id = payload.split("__")
+                data, frame, id = payload.split("__")
                 id = int(id)
                 print(id)
                 self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)

@@ -70,8 +70,10 @@ class StreamViewer:
         # Build out param dict for OpenPose
         params = dict()
         params["model_folder"] = openpose_model_store
-        params["face"] = face
-        params["hand"] = hand
+        if face:
+            params["face"] = True
+        if hand:
+            params["hand"] = True
 
         # Starting OpenPose
         opWrapper = op.WrapperPython()
