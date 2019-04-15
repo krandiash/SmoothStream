@@ -71,7 +71,7 @@ class Streamer:
                 print (id)
                 id += 1
 
-                print (f'Framerate: {round(id/(time.time() - start), 2)}fps')
+                print ('Framerate: %2.2f fps' % round(id/(time.time() - start), 2))
 
             except KeyboardInterrupt:
                 cv2.destroyAllWindows()
