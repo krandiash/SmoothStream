@@ -106,7 +106,7 @@ class StreamViewer:
                 ready = time.time()
                 opWrapper.emplaceAndPop([datum])
                 timing.append(ready - time.time())
-                print (np.mean(timing))
+                print (np.mean(timing[-30:]))
 
                 if store:
                     print ("Store.")
