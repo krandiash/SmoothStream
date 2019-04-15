@@ -104,6 +104,7 @@ class StreamViewer:
                 opWrapper.emplaceAndPop([datum])
 
                 if store:
+                    print ("Store.")
                     cv2.imwrite(store_folder + 'original_%d.jpg' % id, frame)
                     cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
                     np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
