@@ -91,7 +91,7 @@ class StreamViewer:
 
             try:
                 ready = time.time()
-                payload = self.footage_socket.recv_string()
+                payload = self.footage_socket.recv_string(flags = zmq.NOBLOCK)
                 timing_recv.append(time.time() - ready)
 
 
