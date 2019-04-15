@@ -105,6 +105,8 @@ class StreamViewer:
                 frames_processed += 1
                 print("fps:", frames_processed/float(time.time() - start))
 
+                print (datum.poseKeypoints)
+
                 if streamer is not None:
                     payload = image_to_string(datum.poseKeypoints) + separator + str(id).encode()
                     # streamer.footage_socket.send(image_to_string(datum.cvOutputData))
