@@ -114,8 +114,10 @@ class StreamViewer:
                 print("fps:", frames_processed/float(time.time() - start))
 
                 if streamer is not None:
+                    ready = time.time()
                     payload = blosc.pack_array(datum.poseKeypoints) + separator + blosc.pack_array(datum.cvOutputData) \
                               + separator + str(id).encode()
+                    print (time.time() - ready)
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
 
