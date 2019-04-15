@@ -9,7 +9,7 @@ from utils import string_to_image
 
 import base64
 import time
-from zlib import compress, decompress
+import blosc
 
 
 
@@ -32,11 +32,12 @@ class StreamViewer:
         self.current_data = None
 
     def receive_payload(self, payload):
-        data, frame, id = payload.split("____")
+        data, frame, id = payload.split(self.separator)
         id = int(id)
-        print(id)
-        self.current_data = np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
-        self.current_frame = string_to_image(frame)
+        print (id)
+
+        self.current_data = blosc.unpack_array(data) #np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
+        self.current_frame = blosc.unpack_array(frame)
 
         if not self.no_display:
             cv2.imshow("Stream", self.current_frame)
@@ -51,11 +52,12 @@ class StreamViewer:
         """
         self.keep_running = True
         self.no_display = no_display
+        self.separator = "____".encode()
 
         while self.footage_socket and self.keep_running:
             try:
                 payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
-                payload = decompress(payload)
+
                 self.receive_payload(payload)
 
             except zmq.error.Again:

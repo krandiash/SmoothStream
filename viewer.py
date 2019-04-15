@@ -89,10 +89,10 @@ class StreamViewer:
             try:
 
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
-                frame, id = payload.split(separator)#"____")
+                frame, id = payload.split(separator)
+
                 id = int(id)
                 frame = blosc.unpack_array(frame)
-                print (frame)
                 print(id)
 
                 # frame = string_to_image(frame)
@@ -104,7 +104,6 @@ class StreamViewer:
 
                 opWrapper.emplaceAndPop([datum])
 
-
                 if store:
                     print ("Store.")
                     cv2.imwrite(store_folder + 'original_%d.jpg' % id, frame)
@@ -115,10 +114,10 @@ class StreamViewer:
                 print("fps:", frames_processed/float(time.time() - start))
 
                 if streamer is not None:
-                    payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                    payload = blosc.pack_array(datum.poseKeypoints) + separator + blosc.pack_array(datum.cvOutputData) \
                               + separator + str(id).encode()
-
-                    payload = compress(payload)
+                    # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                    #           + separator + str(id).encode()
 
                     try:
                         streamer.footage_socket.send(payload)#, flags=zmq.NOBLOCK)
