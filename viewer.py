@@ -81,6 +81,8 @@ class StreamViewer:
         opWrapper.configure(params)
         opWrapper.start()
 
+        timing = []
+
         while self.footage_socket and self.keep_running:
 
             if frames_processed == 0:
@@ -101,7 +103,10 @@ class StreamViewer:
                 datum = op.Datum()
                 datum.cvInputData = frame
 
+                ready = time.time()
                 opWrapper.emplaceAndPop([datum])
+                timing.append(ready - time.time())
+                print (np.mean(timing))
 
                 if store:
                     print ("Store.")
