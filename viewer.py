@@ -87,7 +87,7 @@ class StreamViewer:
                 start = time.time()
 
             try:
-
+                ready = time.time()
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id = payload.split(separator)
 
@@ -113,11 +113,12 @@ class StreamViewer:
                 frames_processed += 1
                 print("fps:", frames_processed/float(time.time() - start))
 
+                print(time.time() - ready)
+
                 if streamer is not None:
                     ready = time.time()
                     payload = blosc.pack_array(datum.poseKeypoints) + separator + blosc.pack_array(datum.cvOutputData) \
                               + separator + str(id).encode()
-                    print (time.time() - ready)
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
 
