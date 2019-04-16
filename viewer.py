@@ -92,10 +92,10 @@ class StreamViewer:
                 frame, id = payload.split(separator)
 
                 id = int(id)
-                frame = blosc.unpack_array(frame)
+                # frame = blosc.unpack_array(frame)
                 print(id)
 
-                # frame = string_to_image(frame)
+                frame = string_to_image(frame)
                 # print (self.current_frame.shape)
 
                 # Add in the current frame
@@ -117,7 +117,7 @@ class StreamViewer:
 
                 if streamer is not None:
                     ready = time.time()
-                    payload = blosc.pack_array(datum.poseKeypoints) + separator + blosc.pack_array(datum.cvOutputData) \
+                    payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                               + separator + str(id).encode()
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()

@@ -37,7 +37,7 @@ class StreamViewer:
         print (id)
 
         self.current_data = blosc.unpack_array(data) #np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
-        self.current_frame = blosc.unpack_array(frame)
+        self.current_frame = string_to_image(frame)#blosc.unpack_array(frame)
 
         if not self.no_display:
             cv2.imshow("Stream", self.current_frame)
@@ -48,7 +48,8 @@ class StreamViewer:
         id = int(id)
         print (id)
 
-        self.current_frame = blosc.unpack_array(frame)
+        self.current_frame = string_to_image(frame)
+        # self.current_frame = blosc.unpack_array(frame)
 
         if not self.no_display:
             cv2.imshow("Stream", self.current_frame)

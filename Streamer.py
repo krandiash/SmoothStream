@@ -10,6 +10,7 @@ from utils import image_to_string
 
 import numpy as np
 import time
+import sys
 
 
 class Streamer:
@@ -27,8 +28,9 @@ class Streamer:
         self.footage_socket = context.socket(zmq.PUB)
         self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(port))
         self.keep_running = True
+        self.keyframe = None
 
-    def start(self, framerate=None):
+    def start(self, framerate=30):
         """
         Starts sending the stream to the Viewer.
         Creates a camera, takes a image frame converts the frame to string and sends the string across the network
@@ -46,13 +48,21 @@ class Streamer:
         id = 0
         separator = "____".encode()
 
-        time.sleep(2)
+        # time.sleep(2)
 
         start = time.time()
 
         while self.footage_socket and self.keep_running:
             try:
                 frame = camera.current_frame.read()  # grab the current frame
+
+                # if id % framerate == 0:
+                #     self.keyframe = frame
+                # else:
+                #     frame = frame - self.keyframe
+
+                # print (frame)
+                print (sys.getsizeof(frame))
 
                 if framerate is not None:
                     time.sleep(0.6/framerate)  # control the frame rate (works best for 15 fps)
@@ -61,20 +71,22 @@ class Streamer:
                 # crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(crop)
 
-                # image_as_string = image_to_string(frame)  # encode the frame
+                image_as_string = image_to_string(frame)  # encode the frame
+
+                print (sys.getsizeof(image_as_string))
 
                 # Compression?
-                # print (len(image_as_string))
-                image_as_string = blosc.pack_array(frame)
+                # image_as_string = blosc.pack_array(frame)
+                # print (sys.getsizeof(image_as_string))
                 # print (len(image_as_string))
                 # image_as_string = str(compress(image_as_string)).encode()
                 # print (len(image_as_string))
+
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
 
-                print (id)
                 id += 1
 
-                print ('Framerate: %2.2f fps' % round(id/(time.time() - start), 2))
+                print ('Frame: %d, framerate: %2.2f fps' % (id, round(id/(time.time() - start), 2)))
 
             except KeyboardInterrupt:
                 cv2.destroyAllWindows()
