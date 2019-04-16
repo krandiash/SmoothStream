@@ -88,7 +88,7 @@ class StreamViewer:
 
             try:
                 ready = time.time()
-                payload = self.footage_socket.recv_string().decode()#flags=zmq.NOBLOCK)
+                payload = self.footage_socket.recv_string()#flags=zmq.NOBLOCK)
                 frame, id = payload.split(separator)
 
                 id = int(id)

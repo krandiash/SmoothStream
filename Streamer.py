@@ -46,6 +46,8 @@ class Streamer:
         id = 0
         separator = "____".encode()
 
+        time.sleep(2)
+
         start = time.time()
 
         while self.footage_socket and self.keep_running:
@@ -67,7 +69,6 @@ class Streamer:
                 # print (len(image_as_string))
                 # image_as_string = str(compress(image_as_string)).encode()
                 # print (len(image_as_string))
-
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
 
                 print (id)
