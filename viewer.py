@@ -88,13 +88,13 @@ class StreamViewer:
 
             try:
                 ready = time.time()
-                payload = self.footage_socket.recv()#flags=zmq.NOBLOCK)
+                payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id = payload.split(separator)
 
                 id = int(id)
                 # frame = blosc.unpack_array(frame)
                 print(id)
-                
+
                 frame = string_to_image(frame)
                 # print (self.current_frame.shape)
 
@@ -125,7 +125,7 @@ class StreamViewer:
 
                     try:
                         ready = time.time()
-                        streamer.footage_socket.send(payload)#, flags=zmq.NOBLOCK)
+                        streamer.footage_socket.send(payload, flags=zmq.NOBLOCK)
                         print (time.time() - ready)
                     except zmq.error.Again:
                         pass
