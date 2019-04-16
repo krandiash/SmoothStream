@@ -89,13 +89,12 @@ class StreamViewer:
             try:
                 ready = time.time()
                 payload = self.footage_socket.recv()#flags=zmq.NOBLOCK)
-                print (sys.getsizeof(payload))
                 frame, id = payload.split(separator)
 
                 id = int(id)
                 # frame = blosc.unpack_array(frame)
                 print(id)
-
+                print (frame)
                 frame = string_to_image(frame)
                 print (frame)
                 # print (self.current_frame.shape)
