@@ -84,6 +84,5 @@ def image_to_string(image):
 def string_to_image(string):
     # img = base64.b64decode(string)
     img = blosc.unpack_array(string)
-    print (img)
     # npimg = np.fromstring(img, dtype=np.uint8)
     return cv2.imdecode(img, 1)
