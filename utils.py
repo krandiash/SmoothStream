@@ -2,7 +2,8 @@ import io
 import numpy as np
 import cv2
 import base64
-
+import blosc
+import sys
 
 def is_raspberry_pi(raise_on_errors=False):
     """Checks if Raspberry PI.
@@ -75,11 +76,14 @@ def string_to_nparray(string):
 
 
 def image_to_string(image):
-    encoded, buffer = cv2.imencode('.jpg', image)
-    return base64.b64encode(buffer)
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    _, buffer = cv2.imencode('.jpg', image, encode_param)
+    return blosc.pack_array(buffer)#base64.b64encode(buffer)
 
 
 def string_to_image(string):
-    img = base64.b64decode(string)
-    npimg = np.fromstring(img, dtype=np.uint8)
-    return cv2.imdecode(npimg, 1)
+    # img = base64.b64decode(string)
+    img = blosc.unpack_array(string)
+    print (img)
+    # npimg = np.fromstring(img, dtype=np.uint8)
+    return cv2.imdecode(img, 1)
