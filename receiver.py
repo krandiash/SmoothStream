@@ -70,7 +70,7 @@ class StreamViewer:
             try:
                 payload = self.footage_socket.recv()
 
-                self.receive_payload_test(payload)
+                self.receive_payload(payload)
 
             except zmq.error.Again:
                 pass

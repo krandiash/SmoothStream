@@ -96,6 +96,7 @@ class StreamViewer:
                 print(id)
 
                 frame = string_to_image(frame)
+                print (frame)
                 # print (self.current_frame.shape)
 
                 # Add in the current frame

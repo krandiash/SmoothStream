@@ -61,9 +61,6 @@ class Streamer:
                 # else:
                 #     frame = frame - self.keyframe
 
-                # print (frame)
-                print (sys.getsizeof(frame))
-
                 if framerate is not None:
                     time.sleep(0.6/framerate)  # control the frame rate (works best for 15 fps)
 
@@ -73,14 +70,7 @@ class Streamer:
 
                 image_as_string = image_to_string(frame)  # encode the frame
 
-                print (sys.getsizeof(image_as_string))
-
-                # Compression?
-                # image_as_string = blosc.pack_array(frame)
-                # print (sys.getsizeof(image_as_string))
-                # print (len(image_as_string))
-                # image_as_string = str(compress(image_as_string)).encode()
-                # print (len(image_as_string))
+                print (sys.getsizeof(frame), sys.getsizeof(image_as_string))
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
 
