@@ -46,7 +46,7 @@ class Streamer:
         self.keep_running = True
 
         id = 0
-        separator = "____".encode()
+        separator = "______".encode()
 
         # time.sleep(2)
 

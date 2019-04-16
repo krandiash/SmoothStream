@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import cv2
 import numpy as np
@@ -11,6 +12,7 @@ import base64
 import time
 import blosc
 
+sys.path.append('/Users/krandiash/Desktop/live-feedback/')
 from openpose_analysis import lightweight_inference, openpose_analysis
 
 
@@ -32,6 +34,7 @@ class StreamViewer:
         self.keep_running = True
         self.current_data = None
         self.current_id = None
+        self.learn_joint_models()
 
     def receive_payload(self, payload):
         data, frame, id = payload.split(self.separator)
@@ -75,14 +78,14 @@ class StreamViewer:
         """
         self.keep_running = True
         self.no_display = no_display
-        self.separator = "____".encode()
+        self.separator = "______".encode()
 
         while self.footage_socket and self.keep_running:
             try:
                 payload = self.footage_socket.recv()
 
                 self.receive_payload(payload)
-
+                self.do_inference()
                 self.refresh_view()
 
             except zmq.error.Again:

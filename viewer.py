@@ -63,7 +63,7 @@ class StreamViewer:
         self.keep_running = True
         frames_processed = 0
 
-        separator = "____".encode()
+        separator = "______".encode()
 
         store_folder = data_store + "%s/" % (time.strftime("%b_%d_%Y_%H_%M_%S"))
         os.makedirs(store_folder, exist_ok=True)
