@@ -67,7 +67,7 @@ class StreamViewer:
 
         while self.footage_socket and self.keep_running:
             try:
-                payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
+                payload = self.footage_socket.recv()
 
                 self.receive_payload_test(payload)
 

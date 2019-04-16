@@ -65,6 +65,7 @@ class Streamer:
 
                 # Compression?
                 # print (len(image_as_string))
+                frame = np.zeros((3, 3, 3))
                 image_as_string = blosc.pack_array(frame)
                 # print (len(image_as_string))
                 # image_as_string = str(compress(image_as_string)).encode()
