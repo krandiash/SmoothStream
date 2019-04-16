@@ -11,6 +11,7 @@ import base64
 import time
 import blosc
 
+from openpose_analysis import lightweight_inference, openpose_analysis
 
 
 
@@ -30,27 +31,37 @@ class StreamViewer:
         self.current_frame = None
         self.keep_running = True
         self.current_data = None
+        self.current_id = None
 
     def receive_payload(self, payload):
         data, frame, id = payload.split(self.separator)
-        id = int(id)
-        print (id)
 
-        self.current_data = blosc.unpack_array(data) #np.frombuffer(base64.b64decode(data), dtype=np.float32).reshape(-1, 3)
-        self.current_frame = string_to_image(frame)#blosc.unpack_array(frame)
+        self.current_id = int(id)
+        self.current_data = blosc.unpack_array(data)
+        self.current_frame = string_to_image(frame)
 
-        if not self.no_display:
-            cv2.imshow("Stream", self.current_frame)
-            cv2.waitKey(1)
+        print (self.current_id)
 
-    def receive_payload_test(self, payload):
+    def learn_joint_models(self):
+        self.joint_models = openpose_analysis(pose_name='warrior')
+
+    def do_inference(self):
+        self.current_frame = lightweight_inference(self.joint_models, self.current_frame,
+                                                   self.current_data, self.current_id)
+
+
+    def receive_payload_image_only(self, payload):
         frame, id = payload.split(self.separator)
         id = int(id)
         print (id)
 
         self.current_frame = string_to_image(frame)
-        # self.current_frame = blosc.unpack_array(frame)
 
+        if not self.no_display:
+            cv2.imshow("Stream", self.current_frame)
+            cv2.waitKey(1)
+
+    def refresh_view(self):
         if not self.no_display:
             cv2.imshow("Stream", self.current_frame)
             cv2.waitKey(1)
@@ -71,6 +82,8 @@ class StreamViewer:
                 payload = self.footage_socket.recv()
 
                 self.receive_payload(payload)
+
+                self.refresh_view()
 
             except zmq.error.Again:
                 pass

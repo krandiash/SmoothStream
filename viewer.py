@@ -117,7 +117,9 @@ class StreamViewer:
 
                 if streamer is not None:
                     ready = time.time()
-                    payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                    # payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
+                    #           + separator + str(id).encode()
+                    payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
                               + separator + str(id).encode()
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
