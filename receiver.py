@@ -43,6 +43,17 @@ class StreamViewer:
             cv2.imshow("Stream", self.current_frame)
             cv2.waitKey(1)
 
+    def receive_payload_test(self, payload):
+        frame, id = payload.split(self.separator)
+        id = int(id)
+        print (id)
+
+        self.current_frame = blosc.unpack_array(frame)
+
+        if not self.no_display:
+            cv2.imshow("Stream", self.current_frame)
+            cv2.waitKey(1)
+
     def receive_stream(self, no_display=False):
         """
         Displays displayed stream in a window if no arguments are passed.
@@ -56,9 +67,9 @@ class StreamViewer:
 
         while self.footage_socket and self.keep_running:
             try:
-                payload = self.footage_socket.recv_string(flags=zmq.NOBLOCK)
+                payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
 
-                self.receive_payload(payload)
+                self.receive_payload_test(payload)
 
             except zmq.error.Again:
                 pass
