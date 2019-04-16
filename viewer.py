@@ -121,9 +121,12 @@ class StreamViewer:
                               + separator + str(id).encode()
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
+                    print (time.time() - ready)
 
                     try:
+                        ready = time.time()
                         streamer.footage_socket.send(payload)#, flags=zmq.NOBLOCK)
+                        print (time.time() - ready)
                     except zmq.error.Again:
                         pass
 
