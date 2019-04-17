@@ -46,7 +46,7 @@ class Streamer:
 
         # config = flags.FLAGS
 
-        self.framerates = [framerate/2., framerate]
+        self.framerates = [framerate/3., framerate]
 
         print("Streaming Started...")
         camera = Camera()
