@@ -43,7 +43,6 @@ class StreamViewer:
         data, frame, id, timestamp = payload.split(self.separator)
 
         if time.time() - float(timestamp) > 0.5 and self.n_dropped_frames < 10:
-            print ("Dropping %s" % id)
             self.n_dropped_frames += 1
             return False
 
@@ -51,8 +50,6 @@ class StreamViewer:
         self.current_data = blosc.unpack_array(data)
         self.current_frame = string_to_image(frame)
 
-        print (self.current_frame.shape)
-        print (self.current_id)
         return True
 
     def learn_joint_models(self):
