@@ -42,7 +42,7 @@ class StreamViewer:
     def receive_payload(self, payload):
         data, frame, id, timestamp = payload.split(self.separator)
 
-        if time.time() - float(timestamp) > 1.1 and self.n_dropped_frames < 30:
+        if time.time() - float(timestamp) > 0.5 and self.n_dropped_frames < 10:
             print ("Dropping %s" % id)
             self.n_dropped_frames += 1
             return False

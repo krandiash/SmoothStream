@@ -44,6 +44,8 @@ class StreamViewer:
         self.current_frame = None
         self.keep_running = True
 
+        self.n_dropped_frames = 0
+
     def receive_stream(self, display=True):
         """
         Displays displayed stream in a window if no arguments are passed.
@@ -99,11 +101,13 @@ class StreamViewer:
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id, timestamp = payload.split(separator)
 
-                if time.time() - float(timestamp) > 0.3:
+                if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10:
                     print ("Skip %s" % id)
+                    self.n_dropped_frames += 1
                     self.footage_socket_tiny.send(str(0).encode())
                     continue
 
+                self.n_dropped_frames = 0
                 self.footage_socket_tiny.send(str(1).encode())
 
                 timestamp = float(timestamp)
