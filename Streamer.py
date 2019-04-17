@@ -70,9 +70,10 @@ class Streamer:
 
                 image_as_string = image_to_string(frame)  # encode the frame
 
-                print (sys.getsizeof(frame), sys.getsizeof(image_as_string))
 
-                self.footage_socket.send(image_as_string + separator + str(id).encode())  # send it
+
+                self.footage_socket.send(image_as_string + separator + str(id).encode() +
+                                         separator + str(round(time.time(), 2)).encode())  # send it
 
                 id += 1
 

@@ -37,32 +37,39 @@ class StreamViewer:
         self.learn_joint_models()
 
     def receive_payload(self, payload):
-        data, frame, id = payload.split(self.separator)
+        data, frame, id, timestamp = payload.split(self.separator)
+
+        if time.time() - float(timestamp) > 1.1:
+            print ("Dropping %s" % id)
+            return False
 
         self.current_id = int(id)
         self.current_data = blosc.unpack_array(data)
         self.current_frame = string_to_image(frame)
 
         print (self.current_id)
+        return True
 
     def learn_joint_models(self):
         self.joint_models = openpose_analysis(pose_name='warrior')
 
     def do_inference(self):
         self.current_frame = lightweight_inference(self.joint_models, self.current_frame,
-                                                   self.current_data, self.current_id)
-
+                                                   self.current_data, self.current_id, dev_threshold=2.5)
 
     def receive_payload_image_only(self, payload):
-        frame, id = payload.split(self.separator)
+        frame, id, timestamp = payload.split(self.separator)
+
+        if time.time() - float(timestamp) > 1.1:
+            print ("Dropping %s" % id)
+            return False
+
         id = int(id)
         print (id)
 
         self.current_frame = string_to_image(frame)
 
-        if not self.no_display:
-            cv2.imshow("Stream", self.current_frame)
-            cv2.waitKey(1)
+        return True
 
     def refresh_view(self):
         if not self.no_display:
@@ -84,7 +91,11 @@ class StreamViewer:
             try:
                 payload = self.footage_socket.recv()
 
-                self.receive_payload(payload)
+                refresh_view = self.receive_payload(payload)
+
+                if not refresh_view:
+                    continue
+
                 self.do_inference()
                 self.refresh_view()
 
@@ -108,6 +119,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', help='The port which you want the Streaming Viewer to use', required=True)
     parser.add_argument('-d', '--no_display', help='Don\'t display images', action='store_true')
+    parser.add_argument('-t', '--dev_threshold', help='Threshold for difficulty', default=3.0)
 
     args = parser.parse_args()
 

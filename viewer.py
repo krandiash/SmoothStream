@@ -89,9 +89,14 @@ class StreamViewer:
             try:
                 ready = time.time()
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
-                frame, id = payload.split(separator)
+                frame, id, timestamp = payload.split(separator)
 
                 id = int(id)
+                timestamp = float(timestamp)
+                if time.time() - timestamp > 1.1:
+                    print ("Skip %d" % id)
+                    continue
+
                 # frame = blosc.unpack_array(frame)
                 print(id)
 
@@ -120,7 +125,7 @@ class StreamViewer:
                     # payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
                     payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
-                              + separator + str(id).encode()
+                              + separator + str(id).encode() + separator + str(timestamp).encode()
                     # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
                     #           + separator + str(id).encode()
                     print (time.time() - ready)
