@@ -23,15 +23,15 @@ class Streamer:
         :param port: Port which will be used for sending the stream
         """
 
-        print("Connecting to ", server_address, "at", send_port)
+        print("Connecting to", server_address, "at", send_port)
         context = zmq.Context()
         self.footage_socket = context.socket(zmq.PUB)
         self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(send_port))
 
-        print("Listening on ")
+        print("Listening on", recv_port)
         context_tiny = zmq.Context()
         self.footage_socket_tiny = context_tiny.socket(zmq.SUB)
-        self.footage_socket_tiny.bind('tcp://*:' + str(recv_port + 1))
+        self.footage_socket_tiny.bind('tcp://*:' + str(recv_port))
         self.footage_socket_tiny.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
         self.keep_running = True
