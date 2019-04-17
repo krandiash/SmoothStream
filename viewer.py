@@ -128,8 +128,8 @@ class StreamViewer:
                 frames_processed += 1
                 print("fps:", frames_processed/float(time.time() - start))
 
-                payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
-                          + separator + str(id).encode() + separator + str(timestamp).encode()
+                payload = blosc.pack_array(datum.poseKeypoints) + separator + str(id).encode() + \
+                          separator + str(timestamp).encode()
 
                 try:
                     self.footage_socket_send.send(payload, flags=zmq.NOBLOCK)

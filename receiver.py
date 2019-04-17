@@ -61,7 +61,7 @@ class StreamViewer:
         return True
 
     def receive_payload(self, payload):
-        data, frame, id, timestamp = payload.split(self.separator)
+        data, id, timestamp = payload.split(self.separator)
 
         if time.time() - float(timestamp) > 0.5 and self.n_dropped_frames < 10:
             self.n_dropped_frames += 1
@@ -69,7 +69,6 @@ class StreamViewer:
 
         self.current_id = int(id)
         self.current_data = blosc.unpack_array(data)
-        self.current_frame = string_to_image(frame)
 
         return True
 
@@ -94,7 +93,7 @@ class StreamViewer:
     def clean_all_frames(self):
         if not self.current_id:
             return
-        for key in self.all_frames:
+        for key in list(self.all_frames.keys()):
             if key < self.current_id:
                 del self.all_frames[key]
 
