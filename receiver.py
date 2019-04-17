@@ -20,7 +20,7 @@ from openpose_analysis import lightweight_inference, openpose_analysis
 
 
 class StreamViewer:
-    def __init__(self, port, cam_port):
+    def __init__(self, port, cam_port, mode=0):
         """
         Binds the computer to a ip address and starts listening for incoming streams.
 
@@ -39,12 +39,14 @@ class StreamViewer:
         self.current_frame = None
         self.keep_running = True
         self.current_data = None
-        self.current_id = None
+        self.current_id = 0
         self.learn_joint_models()
 
         self.n_dropped_frames = 0
 
         self.all_frames = {}
+
+        self.mode = mode
 
     def receive_payload_image_only(self, payload):
         frame, id, timestamp = payload.split(self.separator)
@@ -67,7 +69,8 @@ class StreamViewer:
             self.n_dropped_frames += 1
             return False
 
-        self.current_id = int(id)
+        if self.mode == 0:
+            self.current_id = int(id)
         self.current_data = blosc.unpack_array(data)
 
         return True
@@ -119,16 +122,23 @@ class StreamViewer:
                 except zmq.error.Again:
                     pass
 
-                payload = self.footage_socket.recv(zmq.NOBLOCK)
-                refresh_view = self.receive_payload(payload)
+                try:
+                    payload = self.footage_socket.recv(zmq.NOBLOCK)
+                    self.receive_payload(payload)
+                except zmq.error.Again:
+                    if self.mode == 0:
+                        continue
+                    else:
+                        pass
 
-                if not refresh_view:
-                    continue
+                # if not refresh_view:
+                #     continue
 
-                self.n_dropped_frames = 0
-
-                self.do_inference()
-                self.refresh_view()
+                if self.current_id in self.all_frames:
+                    self.n_dropped_frames = 0
+                    self.do_inference()
+                    self.refresh_view()
+                    self.current_id += 1
 
             except zmq.error.Again:
                 pass
@@ -152,6 +162,7 @@ def main():
     parser.add_argument('-cp', '--cam_port', help='The port which you want the Streaming Viewer to use', default=8082)
     parser.add_argument('-d', '--no_display', help='Don\'t display images', action='store_true')
     parser.add_argument('-t', '--dev_threshold', help='Threshold for difficulty', default=3.0)
+    parser.add_argument('-m', '--mode', help='Mode for running viewer', choices=[0, 1], required=True)
 
     args = parser.parse_args()
 
