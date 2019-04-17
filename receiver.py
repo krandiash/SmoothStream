@@ -20,7 +20,7 @@ from openpose_analysis import lightweight_inference, openpose_analysis
 
 
 class StreamViewer:
-    def __init__(self, port=PORT):
+    def __init__(self, port):
         """
         Binds the computer to a ip address and starts listening for incoming streams.
 
@@ -30,11 +30,14 @@ class StreamViewer:
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:' + port)
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
         self.current_frame = None
         self.keep_running = True
         self.current_data = None
         self.current_id = None
         self.learn_joint_models()
+
+        self.n_dropped_frames = 0
 
     def receive_payload(self, payload):
         data, frame, id, timestamp = payload.split(self.separator)
@@ -94,7 +97,11 @@ class StreamViewer:
                 refresh_view = self.receive_payload(payload)
 
                 if not refresh_view:
-                    continue
+                    self.n_dropped_frames += 1
+                    if self.n_dropped_frames < 5:
+                        continue
+
+                self.n_dropped_frames = 0
 
                 self.do_inference()
                 self.refresh_view()

@@ -15,7 +15,7 @@ import sys
 
 class Streamer:
 
-    def __init__(self, server_address=SERVER_ADDRESS, port=PORT):
+    def __init__(self, server_address, send_port, recv_port):
         """
         Tries to connect to the StreamViewer with supplied server_address and creates a socket for future use.
 
@@ -23,14 +23,21 @@ class Streamer:
         :param port: Port which will be used for sending the stream
         """
 
-        print("Connecting to ", server_address, "at", port)
+        print("Connecting to ", server_address, "at", send_port)
         context = zmq.Context()
         self.footage_socket = context.socket(zmq.PUB)
-        self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(port))
+        self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(send_port))
+
+        print("Listening on ")
+        context_tiny = zmq.Context()
+        self.footage_socket_tiny = context_tiny.socket(zmq.SUB)
+        self.footage_socket_tiny.bind('tcp://*:' + str(recv_port + 1))
+        self.footage_socket_tiny.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
         self.keep_running = True
         self.keyframe = None
 
-    def start(self, framerate=30):
+    def start(self, framerate=30.):
         """
         Starts sending the stream to the Viewer.
         Creates a camera, takes a image frame converts the frame to string and sends the string across the network
@@ -38,6 +45,8 @@ class Streamer:
         """
 
         # config = flags.FLAGS
+
+        self.framerates = [framerate/2., framerate]
 
         print("Streaming Started...")
         camera = Camera()
@@ -52,25 +61,23 @@ class Streamer:
 
         start = time.time()
 
-        while self.footage_socket and self.keep_running:
+        while self.footage_socket and self.footage_socket_tiny and self.keep_running:
             try:
+                try:
+                    normal_framerate = int(self.footage_socket_tiny.recv(flags=zmq.NOBLOCK))
+                    framerate = self.framerates[normal_framerate]
+                except zmq.error.Again:
+                    pass
+
+                time.sleep(0.6 / framerate)
+
                 frame = camera.current_frame.read()  # grab the current frame
-
-                # if id % framerate == 0:
-                #     self.keyframe = frame
-                # else:
-                #     frame = frame - self.keyframe
-
-                if framerate is not None:
-                    time.sleep(0.6/framerate)  # control the frame rate (works best for 15 fps)
 
                 # Preprocessing?
                 # crop, proc_param, img = preprocess_image(frame)
                 # image_as_string = image_to_string(crop)
 
                 image_as_string = image_to_string(frame)  # encode the frame
-
-
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode() +
                                          separator + str(round(time.time(), 2)).encode())  # send it
@@ -152,21 +159,17 @@ class Streamer:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--server',
-                        help='IP Address of the server which you want to connect to', required=True)
-    parser.add_argument('-p', '--port',
-                        help='The port which you want the Streaming Server to use', required=True)
-    parser.add_argument('-f', '--framerate',
-                        help='Framerate at which to broadcast stream', default=15.0)
+    parser.add_argument('-s', '--server', help='IP Address of the server which you want to connect to', required=True)
+    parser.add_argument('-p', '--port', help='The port which you want the Streaming Server to use', required=True)
+
+    parser.add_argument('-rp', '--recv_port', help='The port where we receive useful statistics', default=8081)
+
+    parser.add_argument('-f', '--framerate', help='Framerate at which to broadcast stream', default=15.0)
 
     args = parser.parse_args()
 
-    port = args.port
-    server_address = args.server
-    framerate = float(args.framerate)
-
-    streamer = Streamer(server_address, port)
-    streamer.start(framerate)
+    streamer = Streamer(args.server, args.port, args.recv_port)
+    streamer.start(float(args.framerate))
 
 
 if __name__ == '__main__':

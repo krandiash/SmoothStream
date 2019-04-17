@@ -22,7 +22,7 @@ import queue
 
 
 class StreamViewer:
-    def __init__(self, port):
+    def __init__(self, port, webcam_server, send_port):
         """
         Binds the computer to a ip address and starts listening for incoming streams.
 
@@ -32,6 +32,11 @@ class StreamViewer:
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:' + str(port))
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
+        context_tiny = zmq.Context()
+        self.footage_socket_tiny = context_tiny.socket(zmq.PUB)
+        self.footage_socket_tiny.connect('tcp://' + str(webcam_server) + ':' + str(send_port))
+
         self.current_frame = None
         self.keep_running = True
 
@@ -91,17 +96,17 @@ class StreamViewer:
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id, timestamp = payload.split(separator)
 
-                id = int(id)
-                timestamp = float(timestamp)
-                if time.time() - timestamp > 1.1:
-                    print ("Skip %d" % id)
+                if time.time() - float(timestamp) > 1.1:
+                    print ("Skip %s" % id)
+                    self.footage_socket_tiny.send(str(0).encode())
                     continue
 
-                # frame = blosc.unpack_array(frame)
+                self.footage_socket_tiny.send(str(1).encode())
+
+                id = int(id)
                 print(id)
 
                 frame = string_to_image(frame)
-                # print (self.current_frame.shape)
 
                 # Add in the current frame
                 datum = op.Datum()
@@ -122,12 +127,9 @@ class StreamViewer:
 
                 if streamer is not None:
                     ready = time.time()
-                    # payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
-                    #           + separator + str(id).encode()
                     payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
                               + separator + str(id).encode() + separator + str(timestamp).encode()
-                    # payload = base64.b64encode(datum.poseKeypoints) + separator + image_to_string(datum.cvOutputData) \
-                    #           + separator + str(id).encode()
+
                     print (time.time() - ready)
 
                     try:
@@ -151,16 +153,14 @@ class StreamViewer:
         self.keep_running = False
 
 
-def main(streamer, hostport, face, hand, data_store, openpose_model_store, store):
-    stream_viewer = StreamViewer(hostport)
-    stream_viewer.process_stream_openpose(data_store, openpose_model_store, streamer, face, hand, store)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-hp', '--hostport', help='The port which you want to receive data on', default=8880)
     parser.add_argument('-s', '--server', help='IP Address of the destination server', required=True)
+
     parser.add_argument('-sp', '--sendport', help='The port of the destination server', default=8080)
+    parser.add_argument('-cp', '--camport', help='The port of the destination server', default=8081)
 
     parser.add_argument('--face', help='Use face model', action='store_true')
     parser.add_argument('--hand', help='Use hands model', action='store_true')
@@ -174,9 +174,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     streamer = Streamer(args.server, int(args.sendport))
-    main(streamer, args.hostport, args.face, args.hand, args.data_store, args.openpose_model_store, args.store)
 
-
+    stream_viewer = StreamViewer(args.hostport, args.server, int(args.camport))
+    stream_viewer.process_stream_openpose(args.data_store, args.openpose_model_store, streamer, args.face, args.hand, args.store)
 
 
 
