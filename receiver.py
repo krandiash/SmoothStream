@@ -42,14 +42,16 @@ class StreamViewer:
     def receive_payload(self, payload):
         data, frame, id, timestamp = payload.split(self.separator)
 
-        if time.time() - float(timestamp) > 1.1:
+        if time.time() - float(timestamp) > 1.1 and self.n_dropped_frames < 30:
             print ("Dropping %s" % id)
+            self.n_dropped_frames += 1
             return False
 
         self.current_id = int(id)
         self.current_data = blosc.unpack_array(data)
         self.current_frame = string_to_image(frame)
 
+        print (self.current_frame.shape)
         print (self.current_id)
         return True
 
@@ -60,10 +62,12 @@ class StreamViewer:
         self.current_frame = lightweight_inference(self.joint_models, self.current_frame,
                                                    self.current_data, self.current_id, dev_threshold=2.5)
 
+        print (self.current_frame.shape)
+
     def receive_payload_image_only(self, payload):
         frame, id, timestamp = payload.split(self.separator)
 
-        if time.time() - float(timestamp) > 1.1:
+        if time.time() - float(timestamp) > 0.5:
             print ("Dropping %s" % id)
             return False
 
@@ -97,9 +101,7 @@ class StreamViewer:
                 refresh_view = self.receive_payload(payload)
 
                 if not refresh_view:
-                    self.n_dropped_frames += 1
-                    if self.n_dropped_frames < 5:
-                        continue
+                    continue
 
                 self.n_dropped_frames = 0
 

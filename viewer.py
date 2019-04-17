@@ -99,8 +99,7 @@ class StreamViewer:
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id, timestamp = payload.split(separator)
 
-
-                if time.time() - float(timestamp) > 1.1:
+                if time.time() - float(timestamp) > 0.3:
                     print ("Skip %s" % id)
                     self.footage_socket_tiny.send(str(0).encode())
                     continue
