@@ -22,7 +22,7 @@ import queue
 
 
 class StreamViewer:
-    def __init__(self, port, webcam_server, send_port):
+    def __init__(self, port, webcam_server, send_port, send_port_tiny):
         """
         Binds the computer to a ip address and starts listening for incoming streams.
 
@@ -33,9 +33,13 @@ class StreamViewer:
         self.footage_socket.bind('tcp://*:' + str(port))
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
+        context_send = zmq.Context()
+        self.footage_socket_send = context_send.socket(zmq.PUB)
+        self.footage_socket_send.connect('tcp://' + str(webcam_server) + ':' + str(send_port))
+
         context_tiny = zmq.Context()
         self.footage_socket_tiny = context_tiny.socket(zmq.PUB)
-        self.footage_socket_tiny.connect('tcp://' + str(webcam_server) + ':' + str(send_port))
+        self.footage_socket_tiny.connect('tcp://' + str(webcam_server) + ':' + str(send_port_tiny))
 
         self.current_frame = None
         self.keep_running = True
@@ -62,8 +66,7 @@ class StreamViewer:
                 break
         print("Streaming Stopped!")
 
-    def process_stream_openpose(self, data_store, openpose_model_store, streamer=None,
-                                face=False, hand=False, store=False):
+    def process_stream_openpose(self, data_store, openpose_model_store, face=False, hand=False, store=False):
 
         self.keep_running = True
         frames_processed = 0
@@ -125,19 +128,18 @@ class StreamViewer:
 
                 print(time.time() - ready)
 
-                if streamer is not None:
+                ready = time.time()
+                payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
+                          + separator + str(id).encode() + separator + str(timestamp).encode()
+
+                print (time.time() - ready)
+
+                try:
                     ready = time.time()
-                    payload = blosc.pack_array(datum.poseKeypoints) + separator + image_to_string(frame) \
-                              + separator + str(id).encode() + separator + str(timestamp).encode()
-
+                    self.footage_socket_send.send(payload, flags=zmq.NOBLOCK)
                     print (time.time() - ready)
-
-                    try:
-                        ready = time.time()
-                        streamer.footage_socket.send(payload, flags=zmq.NOBLOCK)
-                        print (time.time() - ready)
-                    except zmq.error.Again:
-                        pass
+                except zmq.error.Again:
+                    pass
 
             except zmq.error.Again:
                 pass
@@ -173,10 +175,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    streamer = Streamer(args.server, int(args.sendport))
-
-    stream_viewer = StreamViewer(args.hostport, args.server, int(args.camport))
-    stream_viewer.process_stream_openpose(args.data_store, args.openpose_model_store, streamer, args.face, args.hand, args.store)
+    stream_viewer = StreamViewer(args.hostport, args.server, int(args.sendport), int(args.camport))
+    stream_viewer.process_stream_openpose(args.data_store, args.openpose_model_store, args.face, args.hand, args.store)
 
 
 
