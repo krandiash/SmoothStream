@@ -15,7 +15,7 @@ import sys
 
 class Streamer:
 
-    def __init__(self, server_address, send_port, recv_port):
+    def __init__(self, server_address, send_port, recv_port, viewer, viewer_port):
         """
         Tries to connect to the StreamViewer with supplied server_address and creates a socket for future use.
 
@@ -23,12 +23,17 @@ class Streamer:
         :param port: Port which will be used for sending the stream
         """
 
-        print("Connecting to", server_address, "at", send_port)
+        print("[SERVER] Connecting to", server_address, "at", send_port)
         context = zmq.Context()
         self.footage_socket = context.socket(zmq.PUB)
         self.footage_socket.connect('tcp://' + str(server_address) + ':' + str(send_port))
 
-        print("Listening on", recv_port)
+        print("[VIEWER] Connecting to", viewer, "at", viewer_port)
+        context_viewer = zmq.Context()
+        self.footage_socket_viewer = context_viewer.socket(zmq.PUB)
+        self.footage_socket_viewer.connect('tcp://' + str(viewer) + ':' + str(viewer_port))
+
+        print("[HERE] Listening on", recv_port)
         context_tiny = zmq.Context()
         self.footage_socket_tiny = context_tiny.socket(zmq.SUB)
         self.footage_socket_tiny.bind('tcp://*:' + str(recv_port))
@@ -57,7 +62,7 @@ class Streamer:
         id = 0
         separator = "______".encode()
 
-        # time.sleep(2)
+        time.sleep(2)
 
         start = time.time()
 
@@ -70,7 +75,6 @@ class Streamer:
                     pass
 
                 time.sleep(0.6 / framerate)
-
                 frame = camera.current_frame.read()  # grab the current frame
 
                 # Preprocessing?
@@ -78,6 +82,8 @@ class Streamer:
                 # image_as_string = image_to_string(crop)
 
                 image_as_string = image_to_string(frame)  # encode the frame
+
+                self.footage_socket_viewer.send(image_as_string + separator + str(id).encode())
 
                 self.footage_socket.send(image_as_string + separator + str(id).encode() +
                                          separator + str(round(time.time(), 2)).encode())  # send it
@@ -164,11 +170,14 @@ def main():
 
     parser.add_argument('-rp', '--recv_port', help='The port where we receive useful statistics', default=8081)
 
+    parser.add_argument('-v', '--viewer', help='Address of the viewer', default='localhost')
+    parser.add_argument('-vp', '--viewer_port', help='The viewer\'s port', default=8082)
+
     parser.add_argument('-f', '--framerate', help='Framerate at which to broadcast stream', default=15.0)
 
     args = parser.parse_args()
 
-    streamer = Streamer(args.server, args.port, args.recv_port)
+    streamer = Streamer(args.server, args.port, args.recv_port, args.viewer, args.viewer_port)
     streamer.start(float(args.framerate))
 
 
