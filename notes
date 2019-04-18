@@ -25,5 +25,6 @@
 # (3) Configure whether to send the mesh or the skeleton as payload in StreamViewer.py
 
 
-
+# Pushing to git
+> git add viewer.py Streamer.py receiver.py utils.py notes; git commit -m 'updates'; git push;
 

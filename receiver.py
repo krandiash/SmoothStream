@@ -16,9 +16,6 @@ sys.path.append('/Users/krandiash/Desktop/live-feedback/')
 from openpose_analysis import lightweight_inference, openpose_analysis
 
 
-
-
-
 class StreamViewer:
     def __init__(self, port, cam_port, mode=0):
         """
