@@ -103,11 +103,11 @@ class StreamViewer:
                 if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10:
                     print ("Skip %s" % id)
                     self.n_dropped_frames += 1
-                    self.footage_socket_tiny.send(str(0).encode())
+                    self.footage_socket_tiny.send(str(0).encode(), flags=zmq.NOBLOCK)
                     continue
 
                 self.n_dropped_frames = 0
-                self.footage_socket_tiny.send(str(1).encode())
+                self.footage_socket_tiny.send(str(1).encode(), flags=zmq.NOBLOCK)
 
                 timestamp = float(timestamp)
                 id = int(id)

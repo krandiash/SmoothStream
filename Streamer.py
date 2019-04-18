@@ -77,15 +77,14 @@ class Streamer:
                 time.sleep(0.6 / framerate)
                 frame = camera.current_frame.read()  # grab the current frame
 
-                # Preprocessing?
-                # crop, proc_param, img = preprocess_image(frame)
-                # image_as_string = image_to_string(crop)
+                small_frame = resize_img(frame)[0] # resize
 
                 image_as_string = image_to_string(frame)  # encode the frame
+                small_image_as_string = image_to_string(small_frame)  # encode the small frame
 
                 self.footage_socket_viewer.send(image_as_string + separator + str(id).encode())
 
-                self.footage_socket.send(image_as_string + separator + str(id).encode() +
+                self.footage_socket.send(small_image_as_string + separator + str(id).encode() +
                                          separator + str(round(time.time(), 2)).encode())  # send it
 
                 id += 1
@@ -106,17 +105,15 @@ class Streamer:
         """
         self.keep_running = False
 
-#
-# def resize_img(img, scale_factor):
-#     new_size = (np.floor(np.array(img.shape[0:2]) * scale_factor)).astype(int)
-#     new_img = cv2.resize(img, (new_size[1], new_size[0]))
-#     # This is scale factor of [height, width] i.e. [y, x]
-#     actual_factor = [
-#         new_size[0] / float(img.shape[0]), new_size[1] / float(img.shape[1])
-#     ]
-#     return new_img, actual_factor
-#
-#
+
+def resize_img(img, scale_factor=0.25):
+    new_size = (np.floor(np.array(img.shape[0:2]) * scale_factor)).astype(int)
+    new_img = cv2.resize(img, (new_size[1], new_size[0]))
+    # This is scale factor of [height, width] i.e. [y, x]
+    actual_factor = [new_size[0] / float(img.shape[0]), new_size[1] / float(img.shape[1])]
+    return new_img, actual_factor
+
+
 # def scale_and_crop(image, scale, center, img_size):
 #     image_scaled, scale_factors = resize_img(image, scale)
 #     # Swap so it's [x, y]

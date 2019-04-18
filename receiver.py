@@ -71,7 +71,7 @@ class StreamViewer:
 
         if self.mode == 0:
             self.current_id = int(id)
-        self.current_data = blosc.unpack_array(data)
+        self.current_data = blosc.unpack_array(data) * 4.0
 
         return True
 
@@ -162,7 +162,7 @@ def main():
     parser.add_argument('-cp', '--cam_port', help='The port which you want the Streaming Viewer to use', default=8082)
     parser.add_argument('-d', '--no_display', help='Don\'t display images', action='store_true')
     parser.add_argument('-t', '--dev_threshold', help='Threshold for difficulty', default=3.0)
-    parser.add_argument('-m', '--mode', help='Mode for running viewer', choices=[0, 1], required=True)
+    parser.add_argument('-m', '--mode', help='Mode for running viewer', type=int, choices=[0, 1], required=True)
 
     args = parser.parse_args()
 
