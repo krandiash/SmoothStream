@@ -100,7 +100,7 @@ class StreamViewer:
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id, timestamp = payload.split(separator)
 
-                if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10:
+                if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10 and not store:
                     print ("Skip %s" % id)
                     self.n_dropped_frames += 1
                     self.footage_socket_tiny.send(str(0).encode(), flags=zmq.NOBLOCK)
