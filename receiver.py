@@ -74,6 +74,7 @@ class StreamViewer:
 
     def learn_joint_models(self):
         self.joint_models = openpose_analysis(pose_name='warrior')
+        # self.joint_models = openpose_analysis(pose_name='ergonomics')
 
     def do_inference(self):
         self.current_frame = lightweight_inference(self.joint_models, self.all_frames[self.current_id],
