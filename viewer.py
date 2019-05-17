@@ -97,40 +97,52 @@ class StreamViewer:
                 start = time.time()
 
             try:
+                # Get the payload sent by the camera
                 payload = self.footage_socket.recv(flags=zmq.NOBLOCK)
                 frame, id, timestamp = payload.split(separator)
 
-                if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10 and not store:
+                # Store the frame first (we might skip processing this frame below if there's network lag,
+                # but we shouldn't lose this information)
+                if store:
+                    cv2.imwrite(store_folder + 'original_%d.jpg' % id, string_to_image(frame))
+
+                if time.time() - float(timestamp) > 0.3 and self.n_dropped_frames < 10:
                     print ("Skip %s" % id)
                     self.n_dropped_frames += 1
+                    # Tell the camera that we need to get the frame rate down
                     self.footage_socket_tiny.send(str(0).encode(), flags=zmq.NOBLOCK)
                     continue
 
                 self.n_dropped_frames = 0
+                # Tell the camera that we can up the frame rate
                 self.footage_socket_tiny.send(str(1).encode(), flags=zmq.NOBLOCK)
 
+                # Get the payload into the right form
                 timestamp = float(timestamp)
                 id = int(id)
-
                 frame = string_to_image(frame)
 
-                # Add in the current frame
+                # Add in the current frame to openpose
                 datum = op.Datum()
                 datum.cvInputData = frame
 
+                # Grab the openpose predictions
                 opWrapper.emplaceAndPop([datum])
 
+                # Store
                 if store:
-                    cv2.imwrite(store_folder + 'original_%d.jpg' % id, frame)
                     cv2.imwrite(store_folder + 'rendered_%d.jpg' % id, datum.cvOutputData)
                     np.save(store_folder + 'keypoints_%d' % id, datum.poseKeypoints)
 
                 frames_processed += 1
                 print("fps:", frames_processed/float(time.time() - start))
 
-                payload = blosc.pack_array(datum.poseKeypoints) + separator + str(id).encode() + \
-                          separator + str(timestamp).encode()
+                # Prepare the payload to be sent to the receiver that is viewing
+                payload = blosc.pack_array(datum.poseKeypoints) + separator + \
+                          str(id).encode() + separator + \
+                          str(timestamp).encode()
 
+                # Send the payload
                 try:
                     self.footage_socket_send.send(payload, flags=zmq.NOBLOCK)
                 except zmq.error.Again:
@@ -148,7 +160,6 @@ class StreamViewer:
         :return: None
         """
         self.keep_running = False
-
 
 
 if __name__ == '__main__':

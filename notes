@@ -8,15 +8,15 @@
 
 # and copy the first IP address.
 
-2. In another terminal window on the computer, run
+2. In another terminal window on the computer, run (e.g.)
 
-> python receiver.py -m 0
+> python receiver.py -f prototype_only
 
 3. Then, run
 
 > python viewer.py -s <address of receiver>
 
-# on the server.
+# on the server. If using next, pose_estimation/venv/bin/activate before running.
 
 
 # (1) Edit the frame rate in Streamer.py by changing the sleep interval
